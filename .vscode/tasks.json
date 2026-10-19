@@ -1,0 +1,35 @@
+{
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "Test",
+            "type": "shell",
+            "command": "swift test",
+            "options": { "cwd": "${workspaceFolder}/Packages/BrewCheck" },
+            "group": "test",
+            "problemMatcher": []
+        },
+        {
+            "label": "CLI",
+            "type": "shell",
+            "command": "swift run brewcheck-cli --no-update",
+            "options": { "cwd": "${workspaceFolder}/Packages/BrewCheck" },
+            "problemMatcher": []
+        },
+        {
+            "label": "App bauen",
+            "type": "shell",
+            "command": "scripts/build.sh",
+            "options": { "cwd": "${workspaceFolder}" },
+            "group": "build",
+            "problemMatcher": []
+        },
+        {
+            "label": "App starten",
+            "type": "shell",
+            "command": "scripts/run.sh",
+            "options": { "cwd": "${workspaceFolder}" },
+            "problemMatcher": []
+        }
+    ]
+}
