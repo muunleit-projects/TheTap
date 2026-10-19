@@ -1,0 +1,34 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    name: Test and build (macOS 26)
+    runs-on: macos-26
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Show toolchain
+        run: |
+          xcodebuild -version
+          swift --version
+
+      - name: Run package tests
+        if: hashFiles('Packages/BrewCheck/Package.swift') != ''
+        working-directory: Packages/BrewCheck
+        run: swift test
+
+      - name: Install XcodeGen
+        if: hashFiles('scripts/build.sh') != ''
+        run: brew install xcodegen
+
+      - name: Build app
+        if: hashFiles('scripts/build.sh') != ''
+        run: scripts/build.sh
