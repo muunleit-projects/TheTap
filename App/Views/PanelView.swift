@@ -11,6 +11,13 @@ struct PanelView: View {
                 PackageListView(packages: state.packages)
             }
             Divider()
+            Button {
+                state.startUpgrade()
+            } label: {
+                Text(state.upgradeRunning ? "Upgrade läuft im Terminal …" : "Alles aktualisieren")
+                    .frame(maxWidth: .infinity)
+            }
+            .disabled(!state.canUpgrade)
             HStack {
                 Button("Jetzt prüfen") {
                     Task { await state.checkNow() }
