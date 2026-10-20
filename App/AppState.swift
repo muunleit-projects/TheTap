@@ -22,12 +22,16 @@ final class AppState {
     private(set) var lastErrorMessage: String?
     private(set) var consecutiveFailures = 0
     private(set) var upgradeRunning = false
+    private(set) var isOnline = true
 
     private let checker = BrewChecker()
     private var upgradeTimeout: Task<Void, Never>?
 
     /// If no recheck arrives (Terminal window closed early), the upgrade state ends after this.
     private static let upgradeTimeoutDuration: Duration = .seconds(2 * 60 * 60)
+
+    /// Check interval until the settings exist (Phase 6).
+    private static let defaultCheckInterval: TimeInterval = 6 * 60 * 60
 
     /// Number shown next to the menu bar icon (pinned packages do not count).
     var badgeCount: Int { Policies.badgeCount(packages) }
@@ -56,9 +60,13 @@ final class AppState {
     }
 
     /// Runs `brew outdated`, preceded by `brew update` unless `runUpdate` is false.
-    /// Ignored while a check is running.
+    /// Ignored while a check is running. Offline, it only sets the offline phase.
     func checkNow(runUpdate: Bool = true) async {
         guard phase != .checking else { return }
+        guard isOnline else {
+            phase = .offline
+            return
+        }
         phase = .checking
         lastErrorMessage = nil
         do {
@@ -68,9 +76,28 @@ final class AppState {
             consecutiveFailures = 0
             phase = Policies.badgeCount(result) > 0 ? .updatesAvailable : .upToDate
         } catch let error as BrewCheckError {
-            fail(with: error.userMessage)
+            failCheck(with: error.userMessage)
         } catch {
-            fail(with: error.localizedDescription)
+            failCheck(with: error.localizedDescription)
+        }
+    }
+
+    /// Called by the network monitor whenever reachability changes.
+    func networkChanged(isOnline online: Bool) {
+        guard online != isOnline else { return }
+        isOnline = online
+        if !online {
+            // A running check ends by itself and then lands in the offline phase.
+            if phase != .checking { phase = .offline }
+            return
+        }
+        guard phase == .offline else { return }
+        if Policies.isCheckDue(
+            lastSuccess: lastSuccess, interval: Self.defaultCheckInterval, now: Date())
+        {
+            Task { await checkNow() }
+        } else {
+            restorePhase()
         }
     }
 
@@ -113,9 +140,29 @@ final class AppState {
         }
     }
 
+    /// A failed check while the network is gone is "offline", not an error.
+    private func failCheck(with message: String) {
+        if isOnline {
+            fail(with: message)
+        } else {
+            phase = .offline
+        }
+    }
+
     private func fail(with message: String) {
         consecutiveFailures += 1
         lastErrorMessage = message
         phase = .failed
+    }
+
+    /// Goes back to the phase that matches the last known result.
+    private func restorePhase() {
+        if badgeCount > 0 {
+            phase = .updatesAvailable
+        } else if lastSuccess != nil {
+            phase = .upToDate
+        } else {
+            phase = .notChecked
+        }
     }
 }
