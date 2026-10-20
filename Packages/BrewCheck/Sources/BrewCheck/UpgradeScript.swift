@@ -2,6 +2,7 @@ import Foundation
 
 /// Builds the contents of the temporary `.command` script that runs
 /// `brew upgrade` in Terminal and afterwards asks TheTap to re-check.
+/// The script waits for a key press so the user can read the output.
 public enum UpgradeScript {
     public static let recheckURL = "thetap://recheck"
 
@@ -16,8 +17,9 @@ public enum UpgradeScript {
         eval "$(\(brew) shellenv)"
         \(brew) upgrade\(greedyFlag) --no-ask
         echo
-        echo "Fertig. Dieses Fenster kann geschlossen werden."
+        echo "Fertig. TheTap aktualisiert die Liste jetzt."
         open -g "\(recheckURL)"
+        read -k 1 "?Zum Schließen eine beliebige Taste drücken …"
 
         """
     }

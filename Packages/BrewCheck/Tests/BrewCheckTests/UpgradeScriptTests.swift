@@ -27,8 +27,15 @@ struct UpgradeScriptTests {
         #expect(quoted == #"'/Users/o'\''brien/my brew'"#)
     }
 
-    @Test func endsWithRecheckCall() {
+    @Test func recheckComesBeforeWaitingForKey() throws {
         let script = UpgradeScript.content(brewPath: brew, greedy: true)
-        #expect(script.hasSuffix("open -g \"thetap://recheck\"\n"))
+        let recheck = try #require(script.range(of: "open -g \"thetap://recheck\""))
+        let wait = try #require(script.range(of: "read -k 1"))
+        #expect(recheck.lowerBound < wait.lowerBound)
+    }
+
+    @Test func waitsForKeyAtTheEnd() {
+        let script = UpgradeScript.content(brewPath: brew, greedy: true)
+        #expect(script.hasSuffix("beliebige Taste drücken …\"\n"))
     }
 }
