@@ -1,11 +1,11 @@
 # TheTap – Status
 
-Stand: 19.10.2026
+Stand: 20.10.2026
 
 ## Aktuelle Phase
 
-Phase 0 abgeschlossen (alle Abnahmekriterien vom Nutzer geprüft).
-Als Nächstes: Phase 1 – Kernbibliothek mit Tests.
+Phase 1 – Kernbibliothek mit Tests, in Arbeit.
+Fertig: Package-Gerüst, Datenmodell, `BrewLocator`. Offen: `ProcessRunner`, `OutdatedParser`, `BrewChecker`, `Policies` und die restlichen Fixtures.
 
 ## Umgebung
 
@@ -18,12 +18,25 @@ Als Nächstes: Phase 1 – Kernbibliothek mit Tests.
 ## Erledigt
 
 - Phase 0: Werkzeuge, Repo, `.gitignore`, `docs/PLAN.md`, `docs/STATUS.md`, `.vscode/` (extensions.json, tasks.json) und CI sind angelegt; der erste CI-Lauf ist grün.
+- Phase 1, Gerüst: `Packages/BrewCheck/Package.swift` (tools 6.0, `platforms: [.macOS("26.0")]`, Swift-Sprachmodus 6), Bibliothek `BrewCheck`, ausführbares Produkt `brewcheck-cli` (noch Platzhalter), Testziel mit `Fixtures/` als Ressource. `dump-package` bestätigt macOS 26.0.
+- Phase 1, Datenmodell: `Models.swift` mit `PackageKind`, `OutdatedPackage`, `BrewCheckError`.
+- Phase 1, `BrewLocator`: `BrewLocator.swift` mit injizierbarem `PATH` und injizierter Dateiprüfung; 5 Tests (PATH, Apple Silicon, Intel, nichts gefunden, keine doppelten Pfade).
+- `real.json` erzeugt (`Tests/BrewCheckTests/Fixtures/real.json`).
+- `swift build` und `swift test` sind grün: 6 Tests bestanden. Die Zeile „Executed 0 tests“ des alten XCTest-Läufers ist normal, weil nur Swift Testing verwendet wird.
+
+## Erkenntnisse
+
+- `brew outdated --json=v2 --greedy` liefert Exit-Code 0, auch wenn Pakete veraltet sind. Exit-Code ungleich 0 ist also ein Fehler. Damit ist der Punkt aus PLAN.md („Prüfe einmal am echten System …“) erledigt.
+- `real.json` enthält nur ein Cask (`losslesscut`, 3.69.0 → 3.70.1) und keine Formulae; `pinned_version` ist `null`. Fälle mit Formulae und angepinnten Paketen kommen über selbst geschriebene Fixtures (`pinned.json` usw.).
+- Die Testausgabe nennt `Target Platform: arm64e-apple-macos14.0`. Das ist nur die Anzeige des Test-Frameworks; die Package-Plattform ist macOS 26.0.
 
 ## Offene Probleme
 
-- `.vscode/settings.json` gibt es bewusst nicht: Die Einstellung `swift.searchSubfoldersForPackages` existiert in der installierten Erweiterung nicht (vorhanden ist `swift.ignoreSearchingForPackagesInSubfolders`). In Phase 1 prüfen, ob die Erweiterung `Packages/BrewCheck` von selbst findet; falls nicht, passende Einstellung ergänzen.
+- `.vscode/settings.json` gibt es bewusst nicht: Die Einstellung `swift.searchSubfoldersForPackages` existiert in der installierten Erweiterung nicht (vorhanden ist `swift.ignoreSearchingForPackagesInSubfolders`). Noch zu prüfen: Findet die Erweiterung `Packages/BrewCheck` von selbst (keine roten Fehler in den Quelldateien, Tests in der Seitenleiste)? Falls nicht, passende Einstellung ergänzen.
+- Ergebnis der CI nach dem ersten Push mit Package ist noch nicht gemeldet (erster Lauf, in dem `swift test` wirklich ausgeführt wird).
+- `BrewLocator` und die Tests sind lokal grün, aber noch nicht committet und gepusht.
 - Terminal-App für `.command`-Dateien (Phase 4), Signierung (Phase 5) und Standardwerte (nach einer Woche Alltag) sind weiter offen, siehe PLAN.md.
 
 ## Nächster Schritt
 
-Phase 1 beginnen: Ordner `Packages/BrewCheck` mit Fixtures anlegen und die echte `real.json` erzeugen (`brew outdated --json=v2 --greedy`).
+`ProcessRunner` (Protokoll `CommandRunner`, `CommandResult`) mit den Tests aus der Teststrategie: Ausgabe, Exit-Code, getrennte Streams, große Ausgabe, Timeout, Abbruch. Danach `OutdatedParser` mit den Fixtures, `BrewChecker` mit `FakeRunner` und `Policies`.
