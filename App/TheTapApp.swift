@@ -2,15 +2,13 @@ import SwiftUI
 
 @main
 struct TheTapApp: App {
+    @State private var state = AppState()
+
     var body: some Scene {
-        MenuBarExtra("TheTap", systemImage: "mug") {
-            VStack(alignment: .leading, spacing: 8) {
-                Text("TheTap läuft")
-                Button("Beenden") {
-                    NSApplication.shared.terminate(nil)
-                }
-            }
-            .padding()
+        MenuBarExtra {
+            PanelView(state: state)
+        } label: {
+            MenuBarLabel(state: state)
         }
         .menuBarExtraStyle(.window)
     }
