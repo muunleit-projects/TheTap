@@ -7,11 +7,15 @@ import Testing
     {"formulae":[{"name":"git","installed_versions":["2.46.0"],"current_version":"2.47.0","pinned":false}],"casks":[]}
     """
 
+    /// A fixed environment, so the tests behave the same on every machine.
+    private let testEnvironment = ["PATH": "/should/be/replaced", "HOME": "/tmp/test-home"]
+
     /// A locator that "finds" brew at /fake/bin/brew without touching the disk.
     private func makeChecker(_ runner: FakeRunner) -> BrewChecker {
         BrewChecker(
             runner: runner,
-            locator: BrewLocator(path: "/fake/bin", isExecutable: { $0 == "/fake/bin/brew" }))
+            locator: BrewLocator(path: "/fake/bin", isExecutable: { $0 == "/fake/bin/brew" }),
+            baseEnvironment: testEnvironment)
     }
 
     private func caught(_ body: () async throws -> Void) async -> (any Error)? {
@@ -87,6 +91,16 @@ import Testing
         }
     }
 
+    @Test func keepsBaseEnvironmentAndOverridesPath() async throws {
+        let runner = FakeRunner()
+        _ = try await makeChecker(runner).outdated()
+
+        for call in await runner.calls {
+            #expect(call.environment["HOME"] == "/tmp/test-home")
+            #expect(call.environment["PATH"] != "/should/be/replaced")
+        }
+    }
+
     @Test func parsesOutdatedOutput() async throws {
         let runner = FakeRunner(outdated: fakeResult(out: gitJSON))
         let packages = try await makeChecker(runner).outdated(runUpdate: false)
@@ -126,7 +140,8 @@ import Testing
         let runner = FakeRunner()
         let checker = BrewChecker(
             runner: runner,
-            locator: BrewLocator(path: "/fake/bin", isExecutable: { _ in false }))
+            locator: BrewLocator(path: "/fake/bin", isExecutable: { _ in false }),
+            baseEnvironment: testEnvironment)
 
         let error = await caught { _ = try await checker.outdated() }
 
