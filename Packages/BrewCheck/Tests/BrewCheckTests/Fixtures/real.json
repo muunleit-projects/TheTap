@@ -1,0 +1,14 @@
+{
+  "formulae": [],
+  "casks": [
+    {
+      "name": "losslesscut",
+      "installed_versions": [
+        "3.69.0"
+      ],
+      "current_version": "3.70.1",
+      "pinned": false,
+      "pinned_version": null
+    }
+  ]
+}
