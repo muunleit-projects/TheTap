@@ -1,0 +1,12 @@
+{
+  "formulae": [
+    {
+      "name": "git",
+      "installed_versions": ["2.46.0"],
+      "current_version": "2.47.0",
+      "pinned": false,
+      "pinned_version": null
+    }
+  ],
+  "casks": []
+}
