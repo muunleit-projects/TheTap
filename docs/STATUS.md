@@ -4,26 +4,30 @@ Stand: 20.10.2026
 
 ## Aktuelle Phase
 
-Phase 2 – CLI: abgenommen.
-Nächste Phase: Phase 3 – App-Gerüst (`project.yml`, `MenuBarExtra`, `AppState`, Panel).
+Phase 3 – App-Gerüst: in Arbeit, noch nicht abgenommen.
+Schritt 1 (Projekt, Build, Icon) und Schritt 2 (Zustand, Panel, „Jetzt prüfen“) sind fertig. Es fehlen `scripts/run.sh` und die Abnahme der Kriterien.
 
 ## Umgebung
 
-- Repo: https://github.com/muunleit-projects/TheTap (Branch `main`), lokal unter `~/Programmieren/swift/TheTap`. Letzter Commit der Phase 2: `ac6c0b0`.
+- Repo: https://github.com/muunleit-projects/TheTap (Branch `main`), lokal unter `~/Programmieren/swift/TheTap`. Letzter Commit der Phase 3: `d659f46`.
 - Mac: macOS 26, Xcode 27.1, Swift 6.4, xcodegen 2.46.0, Homebrew 7.0.9, git 2.54.0.
 - VS Code mit der Swift-Erweiterung (swiftlang) ist installiert.
 - CI: `.github/workflows/ci.yml` läuft auf dem Runner `macos-26` mit Xcode 26.6 und Swift 6.3.3. Der Mac hat also ein neueres Swift (6.4) als die CI. Deshalb `swift-tools-version: 6.0` in `Package.swift` verwenden und keine APIs benutzen, die erst mit Xcode 27 kommen.
-- Die CI-Schritte „Run package tests“ und „Build app“ laufen nur, wenn `Packages/BrewCheck/Package.swift` bzw. `scripts/build.sh` existieren. In Phase 3 die `if:`-Bedingungen entfernen, damit nichts still übersprungen wird.
+- Die CI führt seit Phase 3 `swift test`, die Installation von XcodeGen und `scripts/build.sh` ohne `if:`-Bedingungen aus; nichts wird mehr still übersprungen. Letzter Lauf grün.
 - Claude kann Dateien aus dem GitHub-Repo nicht selbst lesen (GitHub sperrt den automatischen Zugriff auf die Unterordner). Dateien, um die es geht, lädt der Nutzer in den Chat hoch oder kopiert sie hinein.
 
 ## Erledigt
 
 - Phase 0: Werkzeuge, Repo, `.gitignore`, `docs/PLAN.md`, `docs/STATUS.md`, `.vscode/` (extensions.json, tasks.json) und CI.
 - Phase 1: Package `Packages/BrewCheck` mit Bibliothek `BrewCheck` (Models, BrewLocator, CommandRunner, ProcessRunner, OutdatedParser, BrewChecker, Policies) und Tests. `BrewChecker.init`-Parameter: `runner`, `locator`, `baseEnvironment`, `updateTimeout`, `outdatedTimeout`.
-- Phase 2, Bibliothek: `BrewCheckError+Message.swift` mit `BrewCheckError.userMessage` (deutsche Kurztexte, für CLI und App gemeinsam); Test `ErrorMessageTests.swift`.
-- Phase 2, CLI (`Sources/BrewCheckCLI/`): `CLIOptions.swift` (Optionen `--no-update`, `--no-greedy`, `--json`, Exit-Code 2 bei unbekannter Option), `OutputFormatter.swift` (Tabelle „Formulae“/„Casks“, „(angepinnt)“, „Alles aktuell.“, JSON mit den Feldnamen von `OutdatedPackage`), `ErrorOutput.swift` (Fehler auf stderr mit `userMessage` plus Befehl, Exit-Code und letzten 20 Ausgabezeilen), `main.swift`.
-- 53 Tests in 5 Suites, lokal und in der CI grün.
-- Phase-2-Abnahme: Liste identisch mit `brew outdated --greedy` und `brew outdated`; Fehler ohne Netz verständlich, Exit-Code 1.
+- Phase 2: `BrewCheckError.userMessage` (deutsche Kurztexte, für CLI und App gemeinsam) und die CLI `brewcheck-cli` (`CLIOptions`, `OutputFormatter`, `ErrorOutput`, `main`). 53 Tests in 5 Suites, lokal und in der CI grün. Phase 2 ist abgenommen.
+- Phase 3, Schritt 1 (Commit `6bcf3d5`): `project.yml`, `scripts/build.sh`, `App/TheTapApp.swift`, generierte `App/Info.plist`, angepasste `ci.yml`.
+  - `project.yml`: Deployment Target macOS 26, Swift 6, Bundle-ID `io.github.muunleit-projects.thetap`, `LSUIElement = YES`, URL-Schema `thetap`, keine Sandbox, Ad-hoc-Signierung, lokales Package `Packages/BrewCheck`.
+  - `App/Info.plist` wird von XcodeGen aus `project.yml` erzeugt und ist eingecheckt; sie steht in `excludes` der Quellen. Keine Warnung dazu aufgetreten.
+- Phase 3, Schritt 2 (Commit `d659f46`):
+  - `App/AppState.swift`: `@MainActor @Observable`, Phasen `notChecked`, `checking`, `upToDate`, `updatesAvailable`, `offline`, `failed`; hält `packages`, `lastSuccess`, `lastErrorMessage`, `consecutiveFailures`, `upgradeRunning`; `badgeCount`, `statusText`, `checkNow()`.
+  - `App/Views/MenuBarLabel.swift`, `PackageListView.swift`, `PanelView.swift` und `App/TheTapApp.swift` (`@State`-Zustand, `MenuBarExtra` im Stil `.window`).
+  - Lokal geprüft: Build grün, Becher-Icon ohne Dock-Icon, „Jetzt prüfen“ wechselt auf die Pfeile, der Knopf ist währenddessen deaktiviert, das Panel bleibt bedienbar, danach erscheinen Zahl und Paketliste. Das Pin-Symbol erscheint bei angepinnten Paketen.
 
 ## Erkenntnisse
 
@@ -35,12 +39,19 @@ Nächste Phase: Phase 3 – App-Gerüst (`project.yml`, `MenuBarExtra`, `AppStat
 - Ohne Netz scheitert `brew update` mit Exit-Code 1 und „Could not resolve host“. Die App muss das später als „Offline“ erkennen (Netzwerkstatus), nicht als Fehler zeigen.
 - `brew outdated` aktualisiert die Homebrew-API-Daten selbst, wenn `HOMEBREW_NO_AUTO_UPDATE` nicht gesetzt ist. Deshalb zeigt ein Lauf mit `--no-update` ggf. weniger Pakete als ein manueller `brew outdated`.
 - Swift 6 erlaubt Top-Level-`await` in `main.swift`; `exit(n)` beendet die CLI mit dem Exit-Code.
+- `scripts/build.sh` baut mit `-derivedDataPath build`; die App liegt danach unter `build/Build/Products/Debug/TheTap.app`. Läuft die App noch, startet `open` nur die alte Instanz: vor einem neuen Test erst über „Beenden“ schließen.
+- SF Symbols auf dem Mac des Nutzers bestätigt: `mug`, `arrow.triangle.2.circlepath`, `pin`. Noch nicht gesehen: `mug.fill` (Updates verfügbar) und `exclamationmark.triangle` (Fehler).
 
 ## Offene Probleme
 
+- Phase 3 offen: `scripts/run.sh` fehlt noch, damit ist der VS-Code-Task „App starten“ aus `tasks.json` noch ohne Wirkung. „App bauen“ funktioniert.
+- Phase 3 offen: Die Scroll-Grenze der Paketliste (ab 12 Zeilen) ist ungetestet, weil bisher zu wenige Pakete veraltet waren. Bei Gelegenheit prüfen.
+- Phase 3 offen: Gefülltes Icon `mug.fill` und Fehler-Icon einmal tatsächlich sehen (z. B. bei veralteten Paketen bzw. ohne Netz).
 - `.vscode/settings.json` gibt es bewusst nicht: Die Einstellung `swift.searchSubfoldersForPackages` existiert in der installierten Erweiterung nicht (vorhanden ist `swift.ignoreSearchingForPackagesInSubfolders`). Noch zu prüfen: Findet die Erweiterung `Packages/BrewCheck` von selbst (keine roten Fehler in den Quelldateien, Tests in der Seitenleiste)? Falls nicht, passende Einstellung ergänzen.
+- Bewusst noch nicht umgesetzt (spätere Phasen): „Offline“-Erkennung und Wiederholung nach Fehlschlägen (Phase 5; `consecutiveFailures` wird bereits gezählt, ein Fehler wird aktuell sofort angezeigt), „Log öffnen“ und Logdatei (Phase 6), „Alles aktualisieren“ (Phase 4), Einstellungen (Phase 6).
 - Terminal-App für `.command`-Dateien (Phase 4), Signierung (Phase 5) und Standardwerte (nach einer Woche Alltag) sind weiter offen, siehe PLAN.md.
 
 ## Nächster Schritt
 
-Phase 3: `project.yml` (Deployment Target macOS 26, Swift 6, Bundle-ID `io.github.muunleit-projects.thetap`, `LSUIElement = YES`, URL-Schema `thetap`, ohne Sandbox, Ad-hoc-Signierung, lokales Package `Packages/BrewCheck`), `scripts/build.sh`, danach App mit `MenuBarExtra`, `AppState` und Panel. Dabei in `ci.yml` die `if:`-Bedingungen der Schritte „Run package tests“ und „Build app“ entfernen. SF Symbols (`mug`, `mug.fill`, `arrow.triangle.2.circlepath`, `exclamationmark.triangle`) vor der Verwendung prüfen. Im neuen Chat hochladen: `PLAN.md`, `STATUS.md`, `Packages/BrewCheck/Package.swift`, `.github/workflows/ci.yml`, `.vscode/tasks.json`, `.gitignore`.
+Phase 3, Schritt 3: `scripts/run.sh` (bauen, laufende App beenden, neu starten), danach die Phase-3-Abnahme mit dem Nutzer: VS-Code-Tasks „App bauen“ und „App starten“, Icon-Zahl, Panel während der Prüfung. Danach Phase 4 (Upgrade und Recheck).
+Im neuen Chat hochladen: `PLAN.md`, `STATUS.md`, `scripts/build.sh`, `project.yml`, `.vscode/tasks.json`.
