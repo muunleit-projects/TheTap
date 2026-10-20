@@ -11,7 +11,7 @@ Schritt 1 (Projekt, Build, Icon) und Schritt 2 (Zustand, Panel, „Jetzt prüfen
 
 - Repo: https://github.com/muunleit-projects/TheTap (Branch `main`), lokal unter `~/Programmieren/swift/TheTap`. Letzter Commit der Phase 3: `d659f46`.
 - Mac: macOS 26, Xcode 27.1, Swift 6.4, xcodegen 2.46.0, Homebrew 7.0.9, git 2.54.0.
-- VS Code mit der Swift-Erweiterung (swiftlang) ist installiert.
+- VS Code mit der Swift-Erweiterung (swiftlang) ist installiertt.
 - CI: `.github/workflows/ci.yml` läuft auf dem Runner `macos-26` mit Xcode 26.6 und Swift 6.3.3. Der Mac hat also ein neueres Swift (6.4) als die CI. Deshalb `swift-tools-version: 6.0` in `Package.swift` verwenden und keine APIs benutzen, die erst mit Xcode 27 kommen.
 - Die CI führt seit Phase 3 `swift test`, die Installation von XcodeGen und `scripts/build.sh` ohne `if:`-Bedingungen aus; nichts wird mehr still übersprungen. Letzter Lauf grün.
 - Claude kann Dateien aus dem GitHub-Repo nicht selbst lesen (GitHub sperrt den automatischen Zugriff auf die Unterordner). Dateien, um die es geht, lädt der Nutzer in den Chat hoch oder kopiert sie hinein.
