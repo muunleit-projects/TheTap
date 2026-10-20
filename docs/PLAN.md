@@ -190,22 +190,22 @@ public actor BrewChecker {
 
 ```json
 {
-    "formulae": [
-        {
-            "name": "git",
-            "installed_versions": ["2.46.0"],
-            "current_version": "2.47.0",
-            "pinned": false,
-            "pinned_version": null
-        }
-    ],
-    "casks": [
-        {
-            "name": "firefox",
-            "installed_versions": ["130.0"],
-            "current_version": "131.0"
-        }
-    ]
+  "formulae": [
+    {
+      "name": "git",
+      "installed_versions": ["2.46.0"],
+      "current_version": "2.47.0",
+      "pinned": false,
+      "pinned_version": null
+    }
+  ],
+  "casks": [
+    {
+      "name": "firefox",
+      "installed_versions": ["130.0"],
+      "current_version": "131.0"
+    }
+  ]
 }
 ```
 
@@ -291,11 +291,13 @@ Inhalt des Skripts. `<BREW>` ist der gefundene brew-Pfad, sicher in Anführungsz
 eval "$("<BREW>" shellenv)"
 "<BREW>" upgrade --greedy --no-ask
 echo
-echo "Fertig. Dieses Fenster kann geschlossen werden."
+echo "Fertig. TheTap aktualisiert die Liste jetzt."
 open -g "thetap://recheck"
+read -k 1 "?Zum Schließen eine beliebige Taste drücken …"
 ```
 
 - `thetap://recheck` löst eine Prüfung **ohne** `brew update` aus (die Daten sind frisch) und beendet den Zustand „Upgrade läuft“.
+- Das Skript wartet am Ende auf einen Tastendruck, weil Terminal das Fenster sonst sofort schließt und die brew-Ausgabe nicht lesbar wäre. Der Recheck wird vorher ausgelöst.
 - Kommt kein Recheck (Fenster vorher geschlossen), endet der Zustand nach 2 Stunden von selbst; die nächste reguläre Prüfung korrigiert die Liste.
 
 ### URL-Schema und App-Delegate
@@ -321,10 +323,10 @@ Die App stürzt nie wegen brew ab und blockiert nie die Oberfläche; jeder Fehle
 - **Systemlog:** `os.Logger` mit der Bundle-ID als Subsystem und den Kategorien `check`, `scheduler`, `upgrade`, `notifications`. Der Nutzer kann es in der App „Konsole“ ansehen.
 - **Logdatei:** Fehlerdetails (Befehl, Exit-Code, die letzten 200 Zeilen Ausgabe) zusätzlich nach `~/Library/Logs/TheTap/thetap.log`. Ab 1 MB wird die Datei in `thetap.log.1` umbenannt und neu begonnen. Nicht `/tmp` verwenden, das leert macOS.
 - **Meldungen in der Oberfläche:** eine Zeile auf Deutsch, die sagt, was zu tun ist. Beispiele:
-    - `brewNotFound` → „Homebrew nicht gefunden. Erwartet unter /opt/homebrew oder /usr/local.“
-    - `timedOut` → „brew hat nicht rechtzeitig geantwortet. Neuer Versuch folgt.“
-    - `commandFailed` → „brew meldet einen Fehler. Details im Log.“
-    - `invalidJSON` → „Unerwartete Antwort von brew. Details im Log.“
+  - `brewNotFound` → „Homebrew nicht gefunden. Erwartet unter /opt/homebrew oder /usr/local.“
+  - `timedOut` → „brew hat nicht rechtzeitig geantwortet. Neuer Versuch folgt.“
+  - `commandFailed` → „brew meldet einen Fehler. Details im Log.“
+  - `invalidJSON` → „Unerwartete Antwort von brew. Details im Log.“
 - **Keine sensiblen Daten** ins Log außer der brew-Ausgabe selbst; keine Umgebungsvariablen vollständig loggen.
 
 ## Teststrategie
@@ -378,27 +380,27 @@ Package `Packages/BrewCheck` anlegen; Datenmodell, `BrewLocator`, `ProcessRunner
 
 `brewcheck-cli` nach Spezifikation.
 
-- [ ] `swift run brewcheck-cli` zeigt dieselben Pakete wie `brew outdated --greedy`
-- [ ] `--no-update`, `--no-greedy` und `--json` funktionieren
-- [ ] Ohne Netz erscheint eine verständliche Fehlermeldung statt eines Absturzes
+- [x] `swift run brewcheck-cli` zeigt dieselben Pakete wie `brew outdated --greedy`
+- [x] `--no-update`, `--no-greedy` und `--json` funktionieren
+- [x] Ohne Netz erscheint eine verständliche Fehlermeldung statt eines Absturzes
 
 ### Phase 3 – App-Gerüst
 
 `project.yml`, App mit `MenuBarExtra`, `AppState`, Panel mit Liste sowie „Jetzt prüfen“ und „Beenden“. Noch keine Automatik und keine Mitteilungen.
 
-- [ ] `scripts/build.sh` läuft ohne Fehler, lokal und in GitHub Actions
-- [ ] Die VS-Code-Tasks „App bauen“ und „App starten“ funktionieren
-- [ ] Die App startet ohne Dock-Icon und zeigt ihr Icon in der Menüleiste
-- [ ] „Jetzt prüfen“ zeigt die echten Pakete; das Panel bleibt während der Prüfung bedienbar
-- [ ] Das Icon zeigt die richtige Zahl
+- [x] `scripts/build.sh` läuft ohne Fehler, lokal und in GitHub Actions
+- [x] Die VS-Code-Tasks „App bauen“ und „App starten“ funktionieren
+- [x] Die App startet ohne Dock-Icon und zeigt ihr Icon in der Menüleiste
+- [x] „Jetzt prüfen“ zeigt die echten Pakete; das Panel bleibt während der Prüfung bedienbar
+- [x] Das Icon zeigt die richtige Zahl
 
 ### Phase 4 – Upgrade und Recheck
 
 `UpgradeLauncher`, URL-Schema `thetap://recheck`, Zustand „Upgrade läuft“.
 
-- [ ] „Alles aktualisieren“ öffnet das Terminal und startet das Upgrade
-- [ ] Nach dem Ende des Upgrades aktualisiert sich die Liste von selbst
-- [ ] Angepinnte Pakete bleiben sichtbar, zählen aber nicht mit
+- [x] „Alles aktualisieren“ öffnet das Terminal und startet das Upgrade
+- [x] Nach dem Ende des Upgrades aktualisiert sich die Liste von selbst
+- [x] Angepinnte Pakete bleiben sichtbar, zählen aber nicht mit
 
 ### Phase 5 – Automatik und Mitteilungen
 
@@ -425,7 +427,8 @@ Diese Punkte sind noch nicht mit dem Nutzer geklärt. Kläre sie spätestens in 
 - [x] **Name:** TheTap. App `TheTap.app`, URL-Schema `thetap`, Logordner `~/Library/Logs/TheTap/`.
 - [x] **Bundle-ID:** `io.github.muunleit-projects.thetap`. Nie mehr ändern.
 - [x] **macOS-Version:** macOS 26 auf dem Mac des Nutzers; Deployment Target macOS 26.
-- [ ] **Terminal-App:** Annahme ist, dass `.command`-Dateien im Terminal (oder iTerm) geöffnet werden. In Phase 4 prüfen.
+- [x] **Terminal-App:** `.command`-Dateien öffnen sich auf dem Mac des Nutzers in der Terminal-App (geprüft in Phase 4).
+      Phase 4 prüfen.
 - [ ] **Signierung:** In Phase 5 prüfen, ob Mitteilungen und Login-Start mit Ad-hoc-Signierung zuverlässig funktionieren. Falls nicht: kostenloses „Personal Team“ mit der Apple-ID des Nutzers einrichten (einmalig in Xcode, als Ausnahme von der VS-Code-Regel).
 - [ ] **CI-Runner:** In Phase 0 prüfen, welches GitHub-Actions-Image macOS 26 mit Xcode 26 bietet, und `ci.yml` darauf festlegen.
 - [ ] **Standardwerte:** Prüfintervall 6 Stunden und `--greedy` an sind Vorschläge; der Nutzer kann sie nach einer Woche Alltag anpassen.
