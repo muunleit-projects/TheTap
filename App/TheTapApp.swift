@@ -2,13 +2,13 @@ import SwiftUI
 
 @main
 struct TheTapApp: App {
-    @State private var state = AppState()
+    @NSApplicationDelegateAdaptor(AppDelegate.self) private var delegate
 
     var body: some Scene {
         MenuBarExtra {
-            PanelView(state: state)
+            PanelView(state: delegate.state)
         } label: {
-            MenuBarLabel(state: state)
+            MenuBarLabel(state: delegate.state)
         }
         .menuBarExtraStyle(.window)
     }
