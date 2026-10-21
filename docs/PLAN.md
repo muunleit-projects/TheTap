@@ -183,8 +183,8 @@ Die übrigen Bausteine:
 - `pruneNotified(_:current:) -> Set<PackageKey>` – entfernt gemeldete Einträge für Pakete, die nicht mehr in dieser Version veraltet sind.
 - `badgeCount(_:) -> Int` – zählt nur nicht angepinnte Pakete, weil `brew upgrade` angepinnte überspringt.
 - Neu in Phase 5, Schritt 2:
-    - `failuresBeforeError = 3` und `showsFailure(consecutiveFailures:manual:) -> Bool` – eine manuelle Prüfung zeigt einen Fehler sofort, eine automatische erst ab 3 Fehlschlägen in Folge.
-    - `notificationText(newPackages:badgeCount:) -> NotificationText` (Struktur mit `title` und `body`). Titel: „1 Homebrew-Update verfügbar“ bzw. „3 Homebrew-Updates verfügbar“ (Zahl aus `badgeCount`). Text: die Namen der neuen Pakete, bis drei als „git, node und wget“, mehr als „git, node, wget und 1 weiteres“ bzw. „… und 2 weitere“.
+  - `failuresBeforeError = 3` und `showsFailure(consecutiveFailures:manual:) -> Bool` – eine manuelle Prüfung zeigt einen Fehler sofort, eine automatische erst ab 3 Fehlschlägen in Folge.
+  - `notificationText(newPackages:badgeCount:) -> NotificationText` (Struktur mit `title` und `body`). Titel: „1 Homebrew-Update verfügbar“ bzw. „3 Homebrew-Updates verfügbar“ (Zahl aus `badgeCount`). Text: die Namen der neuen Pakete, bis drei als „git, node und wget“, mehr als „git, node, wget und 1 weiteres“ bzw. „… und 2 weitere“.
 
 ## CLI
 
@@ -198,14 +198,14 @@ Die App zeigt ein Icon in der Menüleiste, das den Zustand auf einen Blick verr�
 
 `AppState` ist `@Observable` und `@MainActor` und die einzige Quelle der Wahrheit für die Oberfläche. Der `AppDelegate` besitzt ihn; `TheTapApp` liest ihn über `@NSApplicationDelegateAdaptor`. Er hält die Phase, die letzte Paketliste, den Zeitpunkt der letzten erfolgreichen Prüfung, den letzten Fehlertext, die Zahl der Fehlversuche in Folge, den Netzwerkstatus und ob gerade ein Upgrade läuft.
 
-| Phase              | Icon in der Menüleiste                           | Kopfzeile im Panel                                  |
-| ------------------ | ------------------------------------------------ | --------------------------------------------------- |
-| Noch nicht geprüft | `mug`                                            | „Noch nicht geprüft“                                |
-| Prüft              | `arrow.triangle.2.circlepath`                    | „Prüfe auf Updates …“                               |
-| Alles aktuell      | `mug`                                            | „Alles aktuell“                                     |
-| Updates verfügbar  | `mug.fill` und die Zahl aus `badgeCount` daneben | „1 Update verfügbar“ / „3 Updates verfügbar“        |
-| Offline            | `mug`                                            | „Offline – Prüfung folgt, sobald das Netz da ist“   |
-| Fehler             | `exclamationmark.triangle`                       | Kurze Fehlerbeschreibung, ab Phase 6 „Log öffnen“   |
+| Phase              | Icon in der Menüleiste                           | Kopfzeile im Panel                                |
+| ------------------ | ------------------------------------------------ | ------------------------------------------------- |
+| Noch nicht geprüft | `mug`                                            | „Noch nicht geprüft“                              |
+| Prüft              | `arrow.triangle.2.circlepath`                    | „Prüfe auf Updates …“                             |
+| Alles aktuell      | `mug`                                            | „Alles aktuell“                                   |
+| Updates verfügbar  | `mug.fill` und die Zahl aus `badgeCount` daneben | „1 Update verfügbar“ / „3 Updates verfügbar“      |
+| Offline            | `mug`                                            | „Offline – Prüfung folgt, sobald das Netz da ist“ |
+| Fehler             | `exclamationmark.triangle`                       | Kurze Fehlerbeschreibung, ab Phase 6 „Log öffnen“ |
 
 Die Namen sind SF Symbols und auf dem Mac des Nutzers bestätigt, ebenso `pin`. Prüfe jedes neue Symbol vor der Verwendung.
 
@@ -299,11 +299,11 @@ Die App stürzt nie wegen brew ab und blockiert nie die Oberfläche; jeder Fehle
 - **Systemlog:** `os.Logger` mit der Bundle-ID als Subsystem und den Kategorien `check`, `scheduler`, `upgrade`, `notifications`. Der Nutzer sieht es in der App „Konsole“ (nach dem Subsystem filtern). Bis zur Logdatei in Phase 6 stehen Fehlerdetails nur dort.
 - **Logdatei (Phase 6):** Fehlerdetails (Befehl, Exit-Code, die letzten 200 Zeilen Ausgabe) zusätzlich nach `~/Library/Logs/TheTap/thetap.log`. Ab 1 MB wird die Datei in `thetap.log.1` umbenannt und neu begonnen. Nicht `/tmp` verwenden, das leert macOS.
 - **Meldungen in der Oberfläche:** eine Zeile auf Deutsch, die sagt, was zu tun ist (`BrewCheckError.userMessage`):
-    - `brewNotFound` → „Homebrew nicht gefunden. Erwartet unter /opt/homebrew oder /usr/local.“
-    - `timedOut` → „brew hat nicht rechtzeitig geantwortet. Neuer Versuch folgt.“
-    - `commandFailed` → „brew meldet einen Fehler. Details im Log.“
-    - `invalidJSON` → „Unerwartete Antwort von brew. Details im Log.“
-    - `cancelled` → „Die Prüfung wurde abgebrochen.“
+  - `brewNotFound` → „Homebrew nicht gefunden. Erwartet unter /opt/homebrew oder /usr/local.“
+  - `timedOut` → „brew hat nicht rechtzeitig geantwortet. Neuer Versuch folgt.“
+  - `commandFailed` → „brew meldet einen Fehler. Details im Log.“
+  - `invalidJSON` → „Unerwartete Antwort von brew. Details im Log.“
+  - `cancelled` → „Die Prüfung wurde abgebrochen.“
 - **Keine sensiblen Daten** ins Log außer der brew-Ausgabe selbst; keine Umgebungsvariablen vollständig loggen.
 
 ## Teststrategie
@@ -367,8 +367,8 @@ Package `Packages/BrewCheck` mit Datenmodell, `BrewLocator`, `ProcessRunner`, `O
 Die App prüft selbstständig, wiederholt still nach Fehlschlägen und meldet neue Updates per Mitteilung. Spezifikation unter „Prüfplan“ und „Mitteilungen“.
 
 1. **Netzwerk und Offline-Phase** – committet in `8c568ca`: `NetworkMonitor` (`NWPathMonitor`), `AppState.networkChanged(isOnline:)`; ein Fehlschlag ohne Netz ergibt „Offline“.
-2. **Neue Regeln in `Policies`** – `failuresBeforeError`, `showsFailure` und `notificationText` samt Tests in `PoliciesTests`. Nur das Package, noch keine App-Änderung.
-3. **Einstiegspunkt und Recheck** – `AppState.checkIfDue()` mit den vier Bedingungen und Logging, Prüfintervall aus `checkInterval`, vorgemerkter Recheck; `networkChanged` nutzt `checkIfDue()`.
+2. **Neue Regeln in `Policies`** – committet in `af55f21`: `failuresBeforeError`, `showsFailure` und `notificationText` samt Tests in `PoliciesTests`. `consecutiveFailures` zählt den aktuellen Fehlschlag mit: ein automatischer Fehler wird ab dem 3. Fehlschlag in Folge sichtbar. Nur das Package, keine App-Änderung.
+3. **Einstiegspunkt und Recheck** – committet in `56688cb`: `AppState.checkIfDue()` mit den vier Bedingungen und Logging, Prüfintervall aus `checkInterval`, vorgemerkter Recheck; `networkChanged` nutzt `checkIfDue()`.
 4. **Scheduler** – `App/Scheduler.swift`: Start nach 10 Sekunden, Wecker per `NSBackgroundActivityScheduler`, Aufwachen. Der `AppDelegate` startet ihn.
 5. **Stille Wiederholung** – `AppState` nutzt `showsFailure`; stille Fehlschläge lassen Liste und Phase stehen.
 6. **Mitteilungen senden** – `App/Notifier.swift`: Erlaubnis, Text aus `notificationText`, Menge `notifiedPackages` fortschreiben.
@@ -376,8 +376,8 @@ Die App prüft selbstständig, wiederholt still nach Fehlschlägen und meldet ne
 
 Abnahme (für Tests mit `checkInterval` von 3 Minuten, danach zurücksetzen):
 
-- [ ] WLAN aus → Phase „Offline“; WLAN wieder an → die fällige Prüfung folgt
-- [ ] `open "thetap://recheck"` während einer laufenden Prüfung: Direkt danach folgt eine zweite Prüfung (Log in „Konsole“)
+- [x] WLAN aus → Phase „Offline“; WLAN wieder an → die fällige Prüfung folgt
+- [x] `open "thetap://recheck"` während einer laufenden Prüfung: Direkt danach folgt eine zweite Prüfung (Log in „Konsole“)
 - [ ] Während „Upgrade läuft“ startet keine automatische Prüfung (Log: übersprungen)
 - [ ] Ohne Zutun folgt nach Ablauf des Prüfintervalls eine neue Prüfung; das System darf den Wecker um einige Minuten verschieben
 - [ ] Nach dem Aufwachen aus dem Ruhezustand folgt eine fällige Prüfung nach etwa einer Minute
