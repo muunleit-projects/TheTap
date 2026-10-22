@@ -256,6 +256,7 @@ Jede Entscheidung (geprüft oder übersprungen, mit Grund) wird mit `os.Logger`,
 - Eine `UNNotificationCategory` mit der Aktion „Alles aktualisieren“ startet das Upgrade wie der Knopf im Panel; ist gerade kein Upgrade möglich, passiert nichts.
 - `userNotificationCenter(_:willPresent:)` liefert `[.banner, .list]`, damit Mitteilungen auch erscheinen, während die App aktiv ist.
 - Mitteilungen funktionieren nur in der gebündelten, signierten App, nicht über `swift run`.
+- **Beobachtet am 22.10.2026 (ad hoc signierter Debug-Build):** Beim ersten Start zeigt macOS ein Banner „Mitteilungen von „TheTap““. Ein Klick darauf öffnet die Systemeinstellungen; dort muss „Mitteilungen erlauben“ eingeschaltet werden. Danach war ein Neustart der App nötig (Ursache ungeklärt). Nach einem Neubau mit `scripts/run.sh` bleibt die Erlaubnis erhalten. Die Aktion „Alles aktualisieren“ erscheint als Knopf in der Mitteilung in der Mitteilungszentrale.
 
 ### Upgrade (`UpgradeLauncher`)
 
@@ -362,7 +363,7 @@ Package `Packages/BrewCheck` mit Datenmodell, `BrewLocator`, `ProcessRunner`, `O
 - [x] Nach dem Ende des Upgrades aktualisiert sich die Liste von selbst
 - [x] Angepinnte Pakete bleiben sichtbar, zählen aber nicht mit
 
-### Phase 5 – Automatik und Mitteilungen
+### Phase 5 – Automatik und Mitteilungen ✓
 
 Die App prüft selbstständig, wiederholt still nach Fehlschlägen und meldet neue Updates per Mitteilung. Spezifikation unter „Prüfplan“ und „Mitteilungen“.
 
@@ -372,7 +373,7 @@ Die App prüft selbstständig, wiederholt still nach Fehlschlägen und meldet ne
 4. **Scheduler** – committet in `8536dbf`: `App/Scheduler.swift` mit Start nach 10 Sekunden, Wecker per `NSBackgroundActivityScheduler` und Aufwachen; der `AppDelegate` startet ihn.
 5. **Stille Wiederholung** – committet in `914f0de`: `AppState` unterscheidet manuelle und automatische Prüfungen (`checkNow(manual:)`) und nutzt `showsFailure`; stille Fehlschläge lassen Liste und Phase stehen. „Jetzt prüfen“ ist während eines Upgrades deaktiviert.
 6. **Mitteilungen senden** – committet in `56f4b6a`: `App/Notifier.swift` mit Erlaubnis, Text aus `notificationText` und Fortschreibung von `notifiedPackages`; `AppState` ruft `notifier.handle` nach jeder erfolgreichen Prüfung, der `AppDelegate` fragt die Erlaubnis beim Start an.
-7. **Aktion und Delegate** – Kategorie mit „Alles aktualisieren“, `AppDelegate` als `UNUserNotificationCenterDelegate`, `willPresent`.
+7. **Aktion und Delegate** – committet in `a8c0114`: Kategorie mit der Aktion „Alles aktualisieren“ (`Notifier.registerCategories()`), `AppDelegate` als `UNUserNotificationCenterDelegate` mit `willPresent` und `didReceive`.
 
 Abnahme (für Tests mit `checkInterval` von 3 Minuten, danach zurücksetzen):
 
@@ -382,10 +383,10 @@ Abnahme (für Tests mit `checkInterval` von 3 Minuten, danach zurücksetzen):
 - [x] Ohne Zutun folgt nach Ablauf des Prüfintervalls eine neue Prüfung; das System darf den Wecker um einige Minuten verschieben
 - [x] Nach dem Aufwachen aus dem Ruhezustand folgt eine fällige Prüfung nach etwa einer Minute
 - [x] Die Regeln für stille Wiederholung sind in `PoliciesTests` abgedeckt und grün
-- [ ] Beim ersten Start mit Mitteilungen fragt macOS nach der Erlaubnis
-- [ ] Nach `defaults delete … notifiedPackages` ergibt die nächste Prüfung genau eine Mitteilung, eine weitere Prüfung ohne Änderung keine
-- [ ] Die Aktion „Alles aktualisieren“ in der Mitteilung startet das Upgrade
-- [ ] Erlaubnis und Mitteilungen funktionieren auch nach einem Neubau mit `scripts/run.sh` (klärt den offenen Punkt „Signierung im Alltag“)
+- [x] Beim ersten Start mit Mitteilungen fragt macOS nach der Erlaubnis (Banner, dann Schalter in den Systemeinstellungen)
+- [x] Nach `defaults delete … notifiedPackages` ergibt die nächste Prüfung genau eine Mitteilung, eine weitere Prüfung ohne Änderung keine
+- [x] Die Aktion „Alles aktualisieren“ in der Mitteilung startet das Upgrade
+- [x] Erlaubnis und Mitteilungen funktionieren auch nach einem Neubau mit `scripts/run.sh` (klärt den offenen Punkt „Signierung im Alltag“ für Mitteilungen)
 
 ### Phase 6 – Einstellungen, Login-Start, Feinschliff
 
@@ -432,7 +433,7 @@ Klärt, was beim Ersetzen einer heruntergeladenen Version durch eine neuere pass
 
 Diese Punkte sind noch nicht geklärt. Kläre sie in der genannten Phase und trage die Antwort unter „Feste Entscheidungen“ ein.
 
-- [ ] **Signierung im Alltag:** In Phase 5 prüfen, ob Mitteilungen mit Ad-hoc-Signierung zuverlässig funktionieren, auch nach einem Neubau; in Phase 6 dasselbe für den Login-Start. Falls nicht: kostenloses „Personal Team“ mit der Apple-ID des Nutzers einrichten (einmalig in Xcode, als Ausnahme von der VS-Code-Regel), aber nur für den lokalen Build. Die Releases aus GitHub bleiben ad hoc; die README nennt dann die Einschränkung.
+- [ ] **Signierung im Alltag:** Mitteilungen funktionieren mit Ad-hoc-Signierung zuverlässig, auch nach einem Neubau (geprüft in Phase 5 am 22.10.2026). Offen ist nur der Login-Start: in Phase 6 prüfen. Falls er nicht zuverlässig geht: kostenloses „Personal Team“ mit der Apple-ID des Nutzers einrichten (einmalig in Xcode, als Ausnahme von der VS-Code-Regel), aber nur für den lokalen Build. Die Releases aus GitHub bleiben ad hoc; die README nennt dann die Einschränkung.
 - [ ] **Updates mit Ad-hoc-Signierung:** Bleiben Freigabe, Mitteilungs-Erlaubnis und Login-Start nach dem Ersetzen durch eine neue Version erhalten? Prüfen in Phase 7b.
 - [ ] **Standardwerte:** Prüfintervall 6 Stunden und `--greedy` an sind Vorschläge; der Nutzer kann sie nach einer Woche Alltag (Phase 6) anpassen.
 
