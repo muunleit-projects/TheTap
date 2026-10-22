@@ -369,7 +369,7 @@ Die App prüft selbstständig, wiederholt still nach Fehlschlägen und meldet ne
 1. **Netzwerk und Offline-Phase** – committet in `8c568ca`: `NetworkMonitor` (`NWPathMonitor`), `AppState.networkChanged(isOnline:)`; ein Fehlschlag ohne Netz ergibt „Offline“.
 2. **Neue Regeln in `Policies`** – committet in `af55f21`: `failuresBeforeError`, `showsFailure` und `notificationText` samt Tests in `PoliciesTests`. `consecutiveFailures` zählt den aktuellen Fehlschlag mit: ein automatischer Fehler wird ab dem 3. Fehlschlag in Folge sichtbar. Nur das Package, keine App-Änderung.
 3. **Einstiegspunkt und Recheck** – committet in `56688cb`: `AppState.checkIfDue()` mit den vier Bedingungen und Logging, Prüfintervall aus `checkInterval`, vorgemerkter Recheck; `networkChanged` nutzt `checkIfDue()`.
-4. **Scheduler** – `App/Scheduler.swift`: Start nach 10 Sekunden, Wecker per `NSBackgroundActivityScheduler`, Aufwachen. Der `AppDelegate` startet ihn.
+4. **Scheduler** – committet (Push-Stand `8536dbf`): `App/Scheduler.swift` mit Start nach 10 Sekunden, Wecker per `NSBackgroundActivityScheduler` und Aufwachen; der `AppDelegate` startet ihn.
 5. **Stille Wiederholung** – `AppState` nutzt `showsFailure`; stille Fehlschläge lassen Liste und Phase stehen.
 6. **Mitteilungen senden** – `App/Notifier.swift`: Erlaubnis, Text aus `notificationText`, Menge `notifiedPackages` fortschreiben.
 7. **Aktion und Delegate** – Kategorie mit „Alles aktualisieren“, `AppDelegate` als `UNUserNotificationCenterDelegate`, `willPresent`.
@@ -378,9 +378,9 @@ Abnahme (für Tests mit `checkInterval` von 3 Minuten, danach zurücksetzen):
 
 - [x] WLAN aus → Phase „Offline“; WLAN wieder an → die fällige Prüfung folgt
 - [x] `open "thetap://recheck"` während einer laufenden Prüfung: Direkt danach folgt eine zweite Prüfung (Log in „Konsole“)
-- [ ] Während „Upgrade läuft“ startet keine automatische Prüfung (Log: übersprungen)
-- [ ] Ohne Zutun folgt nach Ablauf des Prüfintervalls eine neue Prüfung; das System darf den Wecker um einige Minuten verschieben
-- [ ] Nach dem Aufwachen aus dem Ruhezustand folgt eine fällige Prüfung nach etwa einer Minute
+- [x] Während „Upgrade läuft“ startet keine automatische Prüfung (Log: übersprungen)
+- [x] Ohne Zutun folgt nach Ablauf des Prüfintervalls eine neue Prüfung; das System darf den Wecker um einige Minuten verschieben
+- [x] Nach dem Aufwachen aus dem Ruhezustand folgt eine fällige Prüfung nach etwa einer Minute
 - [ ] Die Regeln für stille Wiederholung sind in `PoliciesTests` abgedeckt und grün
 - [ ] Beim ersten Start mit Mitteilungen fragt macOS nach der Erlaubnis
 - [ ] Nach `defaults delete … notifiedPackages` ergibt die nächste Prüfung genau eine Mitteilung, eine weitere Prüfung ohne Änderung keine
