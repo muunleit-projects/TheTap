@@ -16,7 +16,7 @@ Der Nutzer hat keine Erfahrung mit Swift und Xcode, aber etwas mit Visual Studio
 
 - **Arbeitsweise: Chat.** Du arbeitest im Chat (Claude, Free-Plan) und hast keinen Zugriff auf den Mac. Der Nutzer führt jeden Befehl selbst aus und kopiert dir das Ergebnis in den Chat. Verlass dich nicht darauf, das Repo lesen zu können; maßgeblich sind die Dateien, die der Nutzer hochlädt oder hineinkopiert.
 - **Sitzungsstart.** Jeder neue Chat beginnt im selben Projekt und mit dem Vorwissen daraus. Der Nutzer lädt zu Beginn `PLAN.md` und `STATUS.md` hoch, dazu die Dateien, die in `STATUS.md` unter „Nächster Schritt“ stehen. Arbeite nur mit Dateiinhalten, die dir in diesem Chat vorliegen; frag nach einer Datei, statt ihren Inhalt zu raten.
-- **Sitzungsende.** Am Ende jedes Chats, oder wenn der Nutzer es verlangt, lieferst du eine aktualisierte `docs/STATUS.md`: aktuelle Phase und aktueller Schritt, letzter Commit, erledigte Schritte, Erkenntnisse, offene Probleme, nächster Schritt und die Liste der Dateien für den nächsten Chat. Erkenntnisse, die dauerhaft gelten (Toolchain, Verhalten von brew, neue Entscheidungen), trägst du zusätzlich in `PLAN.md` ein.
+- **Sitzungsende.** Am Ende jedes Chats, oder wenn der Nutzer es verlangt oder wenn ein Schritt erledigt wurde, lieferst du eine aktualisierte `docs/STATUS.md`: aktuelle Phase und aktueller Schritt, letzter Commit, erledigte Schritte, Erkenntnisse, offene Probleme, nächster Schritt und die Liste der Dateien für den nächsten Chat. Erkenntnisse, die dauerhaft gelten (Toolchain, Verhalten von brew, neue Entscheidungen), trägst du zusätzlich in `PLAN.md` ein.
 - **Ein Schritt pro Antwort.** Jede Antwort enthält einen überschaubaren Schritt: welche Dateien, ihr vollständiger Inhalt, die Befehle zum Prüfen und die erwartete Ausgabe. Danach wartest du auf die Rückmeldung.
 - **Immer ganze Dateien.** Gib jede neue oder geänderte Datei vollständig aus, mit ihrem Pfad als Überschrift, nie als Ausschnitt oder Diff. Der Nutzer ersetzt den Dateiinhalt komplett. Halte Dateien klein, lieber mehrere kurze als eine lange. Ausnahmen sind `PLAN.md` und `RELEASE.md`: Dort gibst du nur die geänderten Abschnitte aus, jeden vollständig von seiner Überschrift (in `RELEASE.md`: vom fett gesetzten Schritt-Titel) bis zur nächsten, und sagst, welchen Abschnitt er ersetzt.
 - **Erst grün, dann weiter.** Nach jeder Änderung lässt du den Nutzer `swift build` und `swift test` im Package ausführen, ab Phase 3 zusätzlich `scripts/build.sh`. Bei Fehlern zuerst reparieren.
@@ -213,7 +213,7 @@ Die Namen sind SF Symbols und auf dem Mac des Nutzers bestätigt, ebenso `pin`. 
 
 1. Kopfzeile mit Phase und „Zuletzt geprüft: vor 12 Min.“ (`RelativeDateTimeFormatter`, deutsch, jede Minute neu berechnet).
 2. Paketliste: erst Formulae, dann Casks; je Zeile Name und „installiert → neu“. Angepinnte Pakete grau mit Pin-Symbol. Ab 12 Zeilen scrollt die Liste, statt das Panel wachsen zu lassen.
-3. Knöpfe: „Alles aktualisieren“ in eigener Zeile (nur aktiv bei mindestens einem nicht angepinnten Paket; während eines Upgrades deaktiviert mit Text „Upgrade läuft im Terminal …“), „Jetzt prüfen“ (während einer Prüfung deaktiviert), „Einstellungen …“ (ab Phase 6), „Beenden“.
+3. Knöpfe: „Alles aktualisieren“ in eigener Zeile (nur aktiv bei mindestens einem nicht angepinnten Paket; während eines Upgrades deaktiviert mit Text „Upgrade läuft im Terminal …“), „Jetzt prüfen“ (während einer Prüfung und während eines Upgrades deaktiviert), „Einstellungen …“ (ab Phase 6), „Beenden“.
 
 ### Prüfplan (`Scheduler`, Phase 5)
 
@@ -224,7 +224,7 @@ Alle automatischen Auslöser rufen denselben Einstiegspunkt `AppState.checkIfDue
 3. Das Netz ist da. Sonst Phase „Offline“.
 4. `isCheckDue` sagt ja. Nach einem Fehlschlag bleibt `lastSuccess` unverändert, die Prüfung ist also weiter fällig; daraus ergibt sich die Wiederholung von selbst.
 
-„Jetzt prüfen“ und der Recheck nach einem Upgrade übergehen die Bedingungen 2 und 4.
+„Jetzt prüfen“ übergeht Bedingung 4; der Knopf ist während eines Upgrades deaktiviert, Bedingung 2 gilt also auch dort. Der Recheck nach einem Upgrade beendet zuerst den Zustand „Upgrade läuft“ und übergeht Bedingung 4.
 
 Jede Entscheidung (geprüft oder übersprungen, mit Grund) wird mit `os.Logger`, Kategorie `scheduler`, geloggt, damit sich der Prüfplan in der App „Konsole“ nachvollziehen lässt.
 
@@ -241,7 +241,7 @@ Jede Entscheidung (geprüft oder übersprungen, mit Grund) wird mit `os.Logger`,
 
 - Jeder Fehlschlag erhöht `consecutiveFailures`; eine erfolgreiche Prüfung setzt ihn auf 0.
 - Ob ein Fehler sichtbar wird, entscheidet `Policies.showsFailure`. Bei einem stillen Fehlschlag bleiben die letzte Paketliste und die vorige Phase stehen; der nächste Wecker versucht es erneut. Typischer Grund: Der Nutzer benutzt gerade selbst brew.
-- „Jetzt prüfen“ setzt den Zähler zurück und zeigt einen Fehler sofort.
+- „Jetzt prüfen“ setzt den Zähler zurück und zeigt einen Fehler sofort. Der Recheck nach einem Upgrade zählt als automatische Prüfung, weil der Nutzer ihn nicht selbst auslöst.
 - Ein Fehlschlag ohne Netz ergibt „Offline“, nicht „Fehler“.
 
 **Recheck nach dem Upgrade** (`thetap://recheck`): beendet „Upgrade läuft“ und prüft ohne `brew update`. Läuft gerade eine Prüfung, wird der Recheck vorgemerkt und direkt nach ihrem Ende ausgeführt, statt verloren zu gehen.
@@ -369,9 +369,9 @@ Die App prüft selbstständig, wiederholt still nach Fehlschlägen und meldet ne
 1. **Netzwerk und Offline-Phase** – committet in `8c568ca`: `NetworkMonitor` (`NWPathMonitor`), `AppState.networkChanged(isOnline:)`; ein Fehlschlag ohne Netz ergibt „Offline“.
 2. **Neue Regeln in `Policies`** – committet in `af55f21`: `failuresBeforeError`, `showsFailure` und `notificationText` samt Tests in `PoliciesTests`. `consecutiveFailures` zählt den aktuellen Fehlschlag mit: ein automatischer Fehler wird ab dem 3. Fehlschlag in Folge sichtbar. Nur das Package, keine App-Änderung.
 3. **Einstiegspunkt und Recheck** – committet in `56688cb`: `AppState.checkIfDue()` mit den vier Bedingungen und Logging, Prüfintervall aus `checkInterval`, vorgemerkter Recheck; `networkChanged` nutzt `checkIfDue()`.
-4. **Scheduler** – committet (Push-Stand `8536dbf`): `App/Scheduler.swift` mit Start nach 10 Sekunden, Wecker per `NSBackgroundActivityScheduler` und Aufwachen; der `AppDelegate` startet ihn.
-5. **Stille Wiederholung** – `AppState` nutzt `showsFailure`; stille Fehlschläge lassen Liste und Phase stehen.
-6. **Mitteilungen senden** – `App/Notifier.swift`: Erlaubnis, Text aus `notificationText`, Menge `notifiedPackages` fortschreiben.
+4. **Scheduler** – committet in `8536dbf`: `App/Scheduler.swift` mit Start nach 10 Sekunden, Wecker per `NSBackgroundActivityScheduler` und Aufwachen; der `AppDelegate` startet ihn.
+5. **Stille Wiederholung** – committet in `914f0de`: `AppState` unterscheidet manuelle und automatische Prüfungen (`checkNow(manual:)`) und nutzt `showsFailure`; stille Fehlschläge lassen Liste und Phase stehen. „Jetzt prüfen“ ist während eines Upgrades deaktiviert.
+6. **Mitteilungen senden** – committet in `56f4b6a`: `App/Notifier.swift` mit Erlaubnis, Text aus `notificationText` und Fortschreibung von `notifiedPackages`; `AppState` ruft `notifier.handle` nach jeder erfolgreichen Prüfung, der `AppDelegate` fragt die Erlaubnis beim Start an.
 7. **Aktion und Delegate** – Kategorie mit „Alles aktualisieren“, `AppDelegate` als `UNUserNotificationCenterDelegate`, `willPresent`.
 
 Abnahme (für Tests mit `checkInterval` von 3 Minuten, danach zurücksetzen):
@@ -381,7 +381,7 @@ Abnahme (für Tests mit `checkInterval` von 3 Minuten, danach zurücksetzen):
 - [x] Während „Upgrade läuft“ startet keine automatische Prüfung (Log: übersprungen)
 - [x] Ohne Zutun folgt nach Ablauf des Prüfintervalls eine neue Prüfung; das System darf den Wecker um einige Minuten verschieben
 - [x] Nach dem Aufwachen aus dem Ruhezustand folgt eine fällige Prüfung nach etwa einer Minute
-- [ ] Die Regeln für stille Wiederholung sind in `PoliciesTests` abgedeckt und grün
+- [x] Die Regeln für stille Wiederholung sind in `PoliciesTests` abgedeckt und grün
 - [ ] Beim ersten Start mit Mitteilungen fragt macOS nach der Erlaubnis
 - [ ] Nach `defaults delete … notifiedPackages` ergibt die nächste Prüfung genau eine Mitteilung, eine weitere Prüfung ohne Änderung keine
 - [ ] Die Aktion „Alles aktualisieren“ in der Mitteilung startet das Upgrade
