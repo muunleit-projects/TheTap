@@ -9,12 +9,32 @@ import os
 final class Notifier {
     static let notifiedKey = "notifiedPackages"
 
+    /// Category of the "new updates" notification; it carries the upgrade action.
+    nonisolated static let categoryIdentifier = "thetap.updates"
+    /// Identifier of the "Alles aktualisieren" action.
+    nonisolated static let upgradeActionIdentifier = "thetap.upgrade"
+
     private let defaults: UserDefaults
     private let logger = Logger(
         subsystem: "io.github.muunleit-projects.thetap", category: "notifications")
 
     init(defaults: UserDefaults = .standard) {
         self.defaults = defaults
+    }
+
+    /// Registers the notification category with its action. Called once at startup.
+    func registerCategories() {
+        let upgrade = UNNotificationAction(
+            identifier: Self.upgradeActionIdentifier,
+            title: "Alles aktualisieren",
+            options: [])
+        let category = UNNotificationCategory(
+            identifier: Self.categoryIdentifier,
+            actions: [upgrade],
+            intentIdentifiers: [],
+            options: [])
+        UNUserNotificationCenter.current().setNotificationCategories([category])
+        logger.notice("Notification category registered")
     }
 
     /// Asks macOS for permission to show alerts. Called once at startup;
@@ -60,6 +80,7 @@ final class Notifier {
         let content = UNMutableNotificationContent()
         content.title = text.title
         content.body = text.body
+        content.categoryIdentifier = Self.categoryIdentifier
         let request = UNNotificationRequest(
             identifier: UUID().uuidString, content: content, trigger: nil)
         do {
