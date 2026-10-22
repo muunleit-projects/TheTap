@@ -24,6 +24,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         let scheduler = Scheduler(state: state)
         scheduler.start()
         self.scheduler = scheduler
+
+        Task { await state.notifier.requestAuthorization() }
     }
 
     /// Handles `thetap://recheck`, which the upgrade script opens when brew is done.

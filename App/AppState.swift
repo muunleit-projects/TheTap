@@ -25,6 +25,9 @@ final class AppState {
     private(set) var upgradeRunning = false
     private(set) var isOnline = true
 
+    /// Sends the "new updates" notification after a successful check.
+    let notifier = Notifier()
+
     private let checker = BrewChecker()
     private let logger = Logger(
         subsystem: "io.github.muunleit-projects.thetap", category: "scheduler")
@@ -181,6 +184,7 @@ final class AppState {
             lastSuccess = Date()
             consecutiveFailures = 0
             phase = Policies.badgeCount(result) > 0 ? .updatesAvailable : .upToDate
+            await notifier.handle(result)
         } catch let error as BrewCheckError {
             failCheck(with: error.userMessage, manual: manual)
         } catch {
