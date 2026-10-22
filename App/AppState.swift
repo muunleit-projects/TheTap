@@ -28,6 +28,9 @@ final class AppState {
     /// Sends the "new updates" notification after a successful check.
     let notifier = Notifier()
 
+    /// Error details for the developer (`~/Library/Logs/TheTap/thetap.log`).
+    let logFile = LogFile()
+
     private let checker = BrewChecker()
     private let logger = Logger(
         subsystem: "io.github.muunleit-projects.thetap", category: "scheduler")
@@ -140,11 +143,11 @@ final class AppState {
             upgradeRunning = true
             scheduleUpgradeTimeout()
         } catch let error as BrewCheckError {
-            fail(with: error.userMessage)
+            fail(with: error.userMessage, details: error.logDetails)
         } catch let error as UpgradeLaunchError {
-            fail(with: error.userMessage)
+            fail(with: error.userMessage, details: "Upgrade launch failed: \(error)")
         } catch {
-            fail(with: error.localizedDescription)
+            fail(with: error.localizedDescription, details: "Upgrade launch failed: \(error)")
         }
     }
 
@@ -186,9 +189,11 @@ final class AppState {
             phase = Policies.badgeCount(result) > 0 ? .updatesAvailable : .upToDate
             await notifier.handle(result)
         } catch let error as BrewCheckError {
-            failCheck(with: error.userMessage, manual: manual)
+            failCheck(with: error.userMessage, details: error.logDetails, manual: manual)
         } catch {
-            failCheck(with: error.localizedDescription, manual: manual)
+            failCheck(
+                with: error.localizedDescription, details: "Unexpected error: \(error)",
+                manual: manual)
         }
     }
 
@@ -202,9 +207,10 @@ final class AppState {
     }
 
     /// A failed check while the network is gone is "offline", not an error.
-    /// Otherwise the failure is counted; `Policies.showsFailure` decides whether
-    /// the user sees it. A silent failure keeps the last list and the previous phase.
-    private func failCheck(with message: String, manual: Bool) {
+    /// Otherwise the failure is counted and written to the log file;
+    /// `Policies.showsFailure` decides whether the user sees it. A silent
+    /// failure keeps the last list and the previous phase.
+    private func failCheck(with message: String, details: String, manual: Bool) {
         guard isOnline else {
             phase = .offline
             return
@@ -214,6 +220,9 @@ final class AppState {
         logger.notice(
             "Check failed (\(self.consecutiveFailures, privacy: .public) in a row, manual: \(manual, privacy: .public), shown: \(shown, privacy: .public)): \(message, privacy: .public)"
         )
+        logFile.write(
+            "Check failed (\(consecutiveFailures) in a row, manual: \(manual), shown: \(shown))\n\(details)"
+        )
         if shown {
             lastErrorMessage = message
             phase = .failed
@@ -222,10 +231,11 @@ final class AppState {
         }
     }
 
-    private func fail(with message: String) {
+    private func fail(with message: String, details: String) {
         consecutiveFailures += 1
         lastErrorMessage = message
         phase = .failed
+        logFile.write("Upgrade could not be started\n\(details)")
     }
 
     /// Goes back to the phase that matches the last known result.

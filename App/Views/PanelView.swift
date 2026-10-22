@@ -23,6 +23,11 @@ struct PanelView: View {
                     Task { await state.checkNow(manual: true) }
                 }
                 .disabled(state.isChecking || state.upgradeRunning)
+                if state.phase == .failed {
+                    Button("Log öffnen") {
+                        NSWorkspace.shared.open(state.logFile.url)
+                    }
+                }
                 Spacer()
                 Button("Beenden") {
                     NSApplication.shared.terminate(nil)
