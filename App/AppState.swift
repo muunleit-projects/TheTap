@@ -100,13 +100,15 @@ final class AppState {
 
     /// Runs `brew outdated`, preceded by `brew update` unless `runUpdate` is false.
     /// Ignored while a check is running. A recheck that arrived meanwhile runs
-    /// right afterwards, without `brew update`.
-    func checkNow(runUpdate: Bool = true) async {
-        await performCheck(runUpdate: runUpdate)
+    /// right afterwards, without `brew update`. A manual check (the "Jetzt prüfen"
+    /// button) resets the failure counter and shows an error at once; an
+    /// automatic one shows it only after repeated failures.
+    func checkNow(runUpdate: Bool = true, manual: Bool = false) async {
+        await performCheck(runUpdate: runUpdate, manual: manual)
         while recheckPending {
             recheckPending = false
             logger.notice("Running queued recheck")
-            await performCheck(runUpdate: false)
+            await performCheck(runUpdate: false, manual: false)
         }
     }
 
@@ -153,6 +155,7 @@ final class AppState {
     /// Called when Terminal reports the upgrade is done (`thetap://recheck`).
     /// Brew data is fresh then, so `brew update` is skipped. If a check is
     /// running right now, the recheck is queued and runs right after it.
+    /// It counts as an automatic check: the user does not trigger it directly.
     func recheckAfterUpgrade() async {
         finishUpgrade()
         if isChecking {
@@ -163,12 +166,13 @@ final class AppState {
         await checkNow(runUpdate: false)
     }
 
-    private func performCheck(runUpdate: Bool) async {
+    private func performCheck(runUpdate: Bool, manual: Bool) async {
         guard phase != .checking else { return }
         guard isOnline else {
             phase = .offline
             return
         }
+        if manual { consecutiveFailures = 0 }
         phase = .checking
         lastErrorMessage = nil
         do {
@@ -178,9 +182,9 @@ final class AppState {
             consecutiveFailures = 0
             phase = Policies.badgeCount(result) > 0 ? .updatesAvailable : .upToDate
         } catch let error as BrewCheckError {
-            failCheck(with: error.userMessage)
+            failCheck(with: error.userMessage, manual: manual)
         } catch {
-            failCheck(with: error.localizedDescription)
+            failCheck(with: error.localizedDescription, manual: manual)
         }
     }
 
@@ -194,11 +198,23 @@ final class AppState {
     }
 
     /// A failed check while the network is gone is "offline", not an error.
-    private func failCheck(with message: String) {
-        if isOnline {
-            fail(with: message)
-        } else {
+    /// Otherwise the failure is counted; `Policies.showsFailure` decides whether
+    /// the user sees it. A silent failure keeps the last list and the previous phase.
+    private func failCheck(with message: String, manual: Bool) {
+        guard isOnline else {
             phase = .offline
+            return
+        }
+        consecutiveFailures += 1
+        let shown = Policies.showsFailure(consecutiveFailures: consecutiveFailures, manual: manual)
+        logger.notice(
+            "Check failed (\(self.consecutiveFailures, privacy: .public) in a row, manual: \(manual, privacy: .public), shown: \(shown, privacy: .public)): \(message, privacy: .public)"
+        )
+        if shown {
+            lastErrorMessage = message
+            phase = .failed
+        } else {
+            restorePhase()
         }
     }
 

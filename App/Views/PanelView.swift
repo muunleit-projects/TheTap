@@ -20,9 +20,9 @@ struct PanelView: View {
             .disabled(!state.canUpgrade)
             HStack {
                 Button("Jetzt prüfen") {
-                    Task { await state.checkNow() }
+                    Task { await state.checkNow(manual: true) }
                 }
-                .disabled(state.isChecking)
+                .disabled(state.isChecking || state.upgradeRunning)
                 Spacer()
                 Button("Beenden") {
                     NSApplication.shared.terminate(nil)
