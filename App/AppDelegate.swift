@@ -7,6 +7,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     let state = AppState()
 
     private let network = NetworkMonitor()
+    private var scheduler: Scheduler?
 
     private let logger = Logger(
         subsystem: "io.github.muunleit-projects.thetap", category: "upgrade")
@@ -19,6 +20,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             state.networkChanged(isOnline: isOnline)
         }
         network.start()
+
+        let scheduler = Scheduler(state: state)
+        scheduler.start()
+        self.scheduler = scheduler
     }
 
     /// Handles `thetap://recheck`, which the upgrade script opens when brew is done.
