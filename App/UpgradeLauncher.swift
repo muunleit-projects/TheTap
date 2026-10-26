@@ -3,9 +3,10 @@ import BrewCheck
 import Foundation
 
 /// Errors that can happen while starting the upgrade in Terminal.
-enum UpgradeLaunchError: Error {
-    case cannotWriteScript
-    case cannotOpenScript
+/// The associated values are only for the log file; the user sees `userMessage`.
+enum UpgradeLaunchError: Error, CustomStringConvertible {
+    case cannotWriteScript(path: String, reason: String)
+    case cannotOpenScript(path: String)
 
     /// Short German text for the user interface.
     var userMessage: String {
@@ -14,6 +15,17 @@ enum UpgradeLaunchError: Error {
             return "Upgrade-Skript konnte nicht angelegt werden."
         case .cannotOpenScript:
             return "Terminal konnte nicht geöffnet werden."
+        }
+    }
+
+    /// English details for the log file. `AppState` writes `"\(error)"`,
+    /// which uses this text.
+    var description: String {
+        switch self {
+        case .cannotWriteScript(let path, let reason):
+            return "Could not write the upgrade script to \(path): \(reason)"
+        case .cannotOpenScript(let path):
+            return "NSWorkspace could not open \(path)"
         }
     }
 }
@@ -33,11 +45,12 @@ enum UpgradeLauncher {
             try FileManager.default.setAttributes(
                 [.posixPermissions: 0o755], ofItemAtPath: url.path)
         } catch {
-            throw UpgradeLaunchError.cannotWriteScript
+            throw UpgradeLaunchError.cannotWriteScript(
+                path: url.path, reason: error.localizedDescription)
         }
 
         guard NSWorkspace.shared.open(url) else {
-            throw UpgradeLaunchError.cannotOpenScript
+            throw UpgradeLaunchError.cannotOpenScript(path: url.path)
         }
     }
 }
