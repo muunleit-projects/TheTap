@@ -435,7 +435,7 @@ Klärt, was beim Ersetzen einer heruntergeladenen Version durch eine neuere pass
 
 Diese Punkte sind noch nicht geklärt. Kläre sie in der genannten Phase und trage die Antwort unter „Feste Entscheidungen“ ein.
 
-- [ ] **Signierung im Alltag:** Mitteilungen funktionieren mit Ad-hoc-Signierung zuverlässig, auch nach einem Neubau (geprüft in Phase 5 am 22.10.2026). Offen ist nur der Login-Start: in Phase 6 prüfen. Falls er nicht zuverlässig geht: kostenloses „Personal Team“ mit der Apple-ID des Nutzers einrichten (einmalig in Xcode, als Ausnahme von der VS-Code-Regel), aber nur für den lokalen Build. Die Releases aus GitHub bleiben ad hoc; die README nennt dann die Einschränkung.
+- [x] **Signierung im Alltag:** Mitteilungen funktionieren mit Ad-hoc-Signierung zuverlässig, auch nach einem Neubau (geprüft in Phase 5 am 22.10.2026). Der Login-Start funktioniert ebenfalls: Die Kopie in `/Applications` startete nach Ab- und Anmelden von selbst (Phase 6, Schritt 4, geprüft am 26.10.2026). Ein kostenloses „Personal Team“ ist deshalb nicht nötig; bei Ad-hoc-Signierung bleibt es.
 - [ ] **Updates mit Ad-hoc-Signierung:** Bleiben Freigabe, Mitteilungs-Erlaubnis und Login-Start nach dem Ersetzen durch eine neue Version erhalten? Prüfen in Phase 7b.
 - [ ] **Standardwerte:** Prüfintervall 6 Stunden und `--greedy` an sind Vorschläge; der Nutzer kann sie nach einer Woche Alltag (Phase 6) anpassen.
 
