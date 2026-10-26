@@ -11,5 +11,9 @@ struct TheTapApp: App {
             MenuBarLabel(state: delegate.state)
         }
         .menuBarExtraStyle(.window)
+
+        Settings {
+            SettingsView(state: delegate.state)
+        }
     }
 }

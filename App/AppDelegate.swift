@@ -34,6 +34,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate, UNUserNotificationCent
         scheduler.start()
         self.scheduler = scheduler
 
+        // The settings window reports a changed check interval through the state.
+        state.onCheckIntervalChange = { [weak scheduler] in
+            scheduler?.restartActivity()
+        }
+
         state.notifier.registerCategories()
         Task { await state.notifier.requestAuthorization() }
     }

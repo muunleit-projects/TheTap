@@ -29,6 +29,12 @@ struct PanelView: View {
                     }
                 }
                 Spacer()
+            }
+            HStack {
+                SettingsLink {
+                    Text("Einstellungen …")
+                }
+                Spacer()
                 Button("Beenden") {
                     NSApplication.shared.terminate(nil)
                 }

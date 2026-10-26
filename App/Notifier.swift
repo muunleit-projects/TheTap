@@ -9,6 +9,9 @@ import os
 final class Notifier {
     static let notifiedKey = "notifiedPackages"
 
+    /// `UserDefaults` key for the "send notifications" switch in the settings.
+    nonisolated static let enabledKey = "notificationsEnabled"
+
     /// Category of the "new updates" notification; it carries the upgrade action.
     nonisolated static let categoryIdentifier = "thetap.updates"
     /// Identifier of the "Alles aktualisieren" action.
@@ -20,6 +23,18 @@ final class Notifier {
 
     init(defaults: UserDefaults = .standard) {
         self.defaults = defaults
+    }
+
+    /// Whether the user switched notifications on in the settings. Default: on.
+    var isEnabled: Bool {
+        defaults.object(forKey: Self.enabledKey) as? Bool ?? true
+    }
+
+    /// Whether macOS currently allows this app to show notifications.
+    func isAllowedBySystem() async -> Bool {
+        let status = await UNUserNotificationCenter.current().notificationSettings()
+            .authorizationStatus
+        return status == .authorized || status == .provisional
     }
 
     /// Registers the notification category with its action. Called once at startup.
@@ -52,7 +67,7 @@ final class Notifier {
 
     /// Called after every successful check with the full list of outdated packages.
     /// Always updates the remembered set; sends a notification only if there are
-    /// new packages and macOS allows notifications.
+    /// new packages, the settings allow it and macOS allows notifications.
     func handle(_ packages: [OutdatedPackage]) async {
         // Bookkeeping first and without awaiting, so two checks cannot interleave here.
         let stored = loadNotified()
@@ -66,9 +81,14 @@ final class Notifier {
             return
         }
 
-        let center = UNUserNotificationCenter.current()
-        let status = await center.notificationSettings().authorizationStatus
-        guard status == .authorized || status == .provisional else {
+        guard isEnabled else {
+            logger.notice(
+                "Not sending: notifications are switched off in the settings (\(newPackages.count, privacy: .public) new)"
+            )
+            return
+        }
+
+        guard await isAllowedBySystem() else {
             logger.notice(
                 "Not sending: notifications are not allowed (\(newPackages.count, privacy: .public) new)"
             )
@@ -84,7 +104,7 @@ final class Notifier {
         let request = UNNotificationRequest(
             identifier: UUID().uuidString, content: content, trigger: nil)
         do {
-            try await center.add(request)
+            try await UNUserNotificationCenter.current().add(request)
             logger.notice(
                 "Notification sent: \(text.title, privacy: .public) | \(text.body, privacy: .public)")
         } catch {

@@ -31,6 +31,10 @@ final class AppState {
     /// Error details for the developer (`~/Library/Logs/TheTap/thetap.log`).
     let logFile = LogFile()
 
+    /// Called when the user changes the check interval in the settings.
+    /// The app delegate points it at the scheduler.
+    @ObservationIgnored var onCheckIntervalChange: (@MainActor () -> Void)?
+
     private let checker = BrewChecker()
     private let logger = Logger(
         subsystem: "io.github.muunleit-projects.thetap", category: "scheduler")
@@ -40,16 +44,24 @@ final class AppState {
     /// If no recheck arrives (Terminal window closed early), the upgrade state ends after this.
     private static let upgradeTimeoutDuration: Duration = .seconds(2 * 60 * 60)
 
-    /// `UserDefaults` key for the check interval in seconds (the settings window writes it in Phase 6).
-    static let checkIntervalKey = "checkInterval"
+    /// `UserDefaults` key for the check interval in seconds (written by the settings window).
+    nonisolated static let checkIntervalKey = "checkInterval"
+
+    /// `UserDefaults` key for "include casks with their own updater" (`--greedy`).
+    nonisolated static let includeGreedyKey = "includeGreedy"
 
     /// Default check interval: 6 hours.
-    static let defaultCheckInterval: TimeInterval = 21600
+    nonisolated static let defaultCheckInterval: TimeInterval = 21600
 
     /// Check interval in seconds. Read on every access, so a changed value applies at once.
     var checkInterval: TimeInterval {
         let value = UserDefaults.standard.double(forKey: Self.checkIntervalKey)
         return value > 0 ? value : Self.defaultCheckInterval
+    }
+
+    /// Whether `--greedy` is used for checks and upgrades. Default: on.
+    var includeGreedy: Bool {
+        UserDefaults.standard.object(forKey: Self.includeGreedyKey) as? Bool ?? true
     }
 
     /// Number shown next to the menu bar icon (pinned packages do not count).
@@ -76,6 +88,12 @@ final class AppState {
         case .failed:
             return lastErrorMessage ?? "Prüfung fehlgeschlagen"
         }
+    }
+
+    /// Tells the scheduler that the check interval changed (called by the settings).
+    func checkIntervalChanged() {
+        logger.notice("Check interval changed to \(self.checkInterval, privacy: .public) s")
+        onCheckIntervalChange?()
     }
 
     /// Entry point for all automatic triggers. Starts a check with `brew update`
@@ -136,10 +154,11 @@ final class AppState {
     }
 
     /// Opens Terminal with the upgrade script and enters the "upgrade running" state.
-    func startUpgrade(greedy: Bool = true) {
+    /// Uses `--greedy` according to the setting.
+    func startUpgrade() {
         guard canUpgrade else { return }
         do {
-            try UpgradeLauncher.start(greedy: greedy)
+            try UpgradeLauncher.start(greedy: includeGreedy)
             upgradeRunning = true
             scheduleUpgradeTimeout()
         } catch let error as BrewCheckError {
@@ -182,7 +201,7 @@ final class AppState {
         phase = .checking
         lastErrorMessage = nil
         do {
-            let result = try await checker.outdated(runUpdate: runUpdate)
+            let result = try await checker.outdated(runUpdate: runUpdate, greedy: includeGreedy)
             packages = result
             lastSuccess = Date()
             consecutiveFailures = 0
