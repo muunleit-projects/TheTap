@@ -95,7 +95,7 @@ TheTap/                          # Repo-Wurzel
 │   ├── LogFile.swift            # ab Phase 6: ~/Library/Logs/TheTap/TheTap.log
 │   └── Assets.xcassets          # ab Phase 6 (App-Icon)
 ├── scripts/
-│   ├── build.sh                 # xcodegen generate + xcodebuild (Debug)
+│   ├── build.sh                 # xcodegen generate + xcodebuild (Debug, oder Release als 1. Parameter)
 │   ├── run.sh                   # bauen, laufende App beenden, neu starten
 │   └── install.sh               # ab Phase 6: Release-Build nach /Applications
 ├── .vscode/
@@ -390,8 +390,11 @@ Abnahme (für Tests mit `checkInterval` von 3 Minuten, danach zurücksetzen):
 - [x] Die Aktion „Alles aktualisieren“ in der Mitteilung startet das Upgrade
 - [x] Erlaubnis und Mitteilungen funktionieren auch nach einem Neubau mit `scripts/run.sh` (klärt den offenen Punkt „Signierung im Alltag“ für Mitteilungen)
 
+### Phase 6 – Einstellungen, Login-Start, Feinschliff
+
+1. **Logdatei** ✓ – abgeschlossen am 22.10.2026 (`5ebc449`, `c70a664` und die Änderung am `UpgradeLauncher`); nach „Fehlerbehandlung und Logging“; „Log öffnen“ in der Phase „Fehler“.
 2. **Einstellungsfenster** ✓ – abgeschlossen am 26.10.2026 (`ff90382`); `Settings`-Szene, `SettingsLink` im Panel, Fenster nach vorne; Prüfintervall, Mitteilungen an/aus, `--greedy`, „Log im Finder zeigen“; Spezifikation unter „Einstellungen (Phase 6)“.
-3. **Installation** – `scripts/install.sh`: Release-Build, laufende TheTap beenden, nach `/Applications` kopieren und starten. Ab jetzt läuft im Alltag nur diese Kopie. `scripts/run.sh` beendet sie beim Entwickeln; danach startet der Nutzer sie wieder mit `open /Applications/TheTap.app`.
+3. **Installation** ✓ – abgeschlossen am 26.10.2026 (Push `5c5661c`): `scripts/build.sh` nimmt als ersten Parameter die Konfiguration (Standard `Debug`); `scripts/install.sh` baut Release (`ONLY_ACTIVE_ARCH=YES`, nur die Architektur dieses Macs), beendet die laufende TheTap, ersetzt `/Applications/TheTap.app` per `ditto`, prüft die Signatur und startet die App. Ab jetzt läuft im Alltag nur diese Kopie. `scripts/run.sh` beendet sie beim Entwickeln; danach startet der Nutzer sie wieder mit `open /Applications/TheTap.app`.
 4. **Beim Anmelden starten** – `SMAppService` in den Einstellungen; nur mit der Kopie in `/Applications` einschalten und testen.
 5. **App-Icon** – Woher das Bild (1024 × 1024 Pixel) kommt, klärt die KI vorher mit dem Nutzer. Ein Skript erzeugt daraus mit `sips` die Größen für `App/Assets.xcassets/AppIcon.appiconset`; `project.yml` setzt `ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon`. Vorher prüfen, ob macOS 26 ein solches Icon-Set noch richtig darstellt. Apples neues Werkzeug Icon Composer wäre eine eigene App und damit eine Ausnahme von der VS-Code-Regel.
 6. **Eine Woche Alltag** – danach die Standardwerte prüfen (offener Punkt).

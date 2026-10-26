@@ -4,17 +4,18 @@ Stand: 26.10.2026
 
 ## Aktuelle Phase
 
-Phase 6 – Einstellungen, Login-Start, Feinschliff: Schritt 1 (Logdatei) und Schritt 2 (Einstellungsfenster) abgeschlossen und geprüft.
-Als Nächstes: Phase 6, Schritt 3 (`scripts/install.sh`), noch nicht begonnen.
+Phase 6 – Einstellungen, Login-Start, Feinschliff: Schritt 1 (Logdatei), Schritt 2 (Einstellungsfenster) und Schritt 3 (Installation) abgeschlossen und geprüft.
+Als Nächstes: Phase 6, Schritt 4 (Beim Anmelden starten), noch nicht begonnen.
 
 ## Umgebung
 
-- Repo: https://github.com/muunleit-projects/TheTap (Branch `main`), lokal unter `~/Programmieren/swift/TheTap`. Commits der letzten Chats: `3e0a17d` (PLAN.md und STATUS.md nach Phase 5), `5ebc449` (Tests für `logDetails`), `c70a664` (Logdatei, „Log öffnen“), `HASH` (UpgradeLauncher schreibt die Ursache ins Log), `ff90382` (Einstellungsfenster; letzter Push, CI grün). Phase 5 endete mit `a8c0114`, Phase 4 mit `64eaa17`.
+- Repo: https://github.com/muunleit-projects/TheTap (Branch `main`), lokal unter `~/Programmieren/swift/TheTap`. Commits der letzten Chats: `3e0a17d` (PLAN.md und STATUS.md nach Phase 5), `5ebc449` (Tests für `logDetails`), `c70a664` (Logdatei, „Log öffnen“), `62c7d35` (UpgradeLauncher schreibt die Ursache ins Log), `9274101` (Plan und Status nach Phase 6, Schritt 1), `ff90382` (Einstellungsfenster), `629dec9` (Plan und Status nach Phase 6, Schritt 2), `5c5661c` (Stand des letzten Push, enthält `scripts/install.sh`; CI-Ergebnis nicht gemeldet). Phase 5 endete mit `a8c0114`, Phase 4 mit `64eaa17`.
 - Mac: macOS 26, Xcode 27.1, Swift 6.4, xcodegen 2.46.0, Homebrew 7.0.9, git 2.54.0. brew liegt unter `/opt/homebrew/bin/brew` (normale Datei, kein Symlink).
 - VS Code mit der Swift-Erweiterung (swiftlang) ist installiert.
-- CI: `.github/workflows/ci.yml` läuft auf dem Runner `macos-26` mit Xcode 26.6 und Swift 6.3.3, also älter als der Mac. Regeln dazu in PLAN.md unter „Feste Entscheidungen → Toolchain“. Die CI führt `swift test`, die Installation von XcodeGen und `scripts/build.sh` ohne `if:`-Bedingungen aus; nichts wird still übersprungen.
-- Tests: 78 Tests in 7 Suites, lokal (auch mit `HOMEBREW_NO_AUTO_UPDATE=1`) und in der CI grün.
+- CI: `.github/workflows/ci.yml` läuft auf dem Runner `macos-26` mit Xcode 26.6 und Swift 6.3.3, also älter als der Mac. Regeln dazu in PLAN.md unter „Feste Entscheidungen → Toolchain“. Die CI führt `swift test`, die Installation von XcodeGen und `scripts/build.sh` (ohne Parameter, also Debug) ohne `if:`-Bedingungen aus; nichts wird still übersprungen.
+- Tests: 78 Tests in 7 Suites, lokal (auch mit `HOMEBREW_NO_AUTO_UPDATE=1`) und in der CI grün (Stand vor Schritt 3; Schritt 3 ändert nur Skripte).
 - `checkInterval` ist nicht gesetzt, es gilt der Standard von 6 Stunden (oder der Wert, den der Nutzer im Einstellungsfenster zuletzt gewählt hat).
+- Im Alltag läuft ab jetzt die Kopie unter `/Applications/TheTap.app` (installiert mit `scripts/install.sh`).
 - Claude kann Dateien aus dem GitHub-Repo nicht selbst lesen (GitHub sperrt den automatischen Zugriff auf die Unterordner). Dateien, um die es geht, lädt der Nutzer in den Chat hoch oder kopiert sie hinein.
 
 ## Erledigt
@@ -37,7 +38,7 @@ Als Nächstes: Phase 6, Schritt 3 (`scripts/install.sh`), noch nicht begonnen.
   - `App/LogFile.swift` (`@MainActor`, `write(_:date:)`): schreibt nach `~/Library/Logs/TheTap/thetap.log`, Zeitstempel ISO 8601 in lokaler Zeit, nach jedem Eintrag eine Leerzeile; ab 1 MB (`maxBytes`) wird die Datei vor dem Schreiben in `thetap.log.1` umbenannt (eine ältere `.1` wird ersetzt). Schreibfehler gehen nur ins Systemlog (Kategorie `check`).
   - `AppState` besitzt `let logFile = LogFile()`. `failCheck(with:details:manual:)` schreibt jeden gezählten Fehlschlag ins Log, auch stille (Kopfzeile `Check failed (N in a row, manual: …, shown: …)`); Offline-Fehlschläge werden nicht geloggt. `fail(with:details:)` (Upgrade-Fehler) schreibt `Upgrade could not be started` plus Details.
   - `PanelView`: Knopf „Log öffnen“ neben „Jetzt prüfen“, nur in der Phase „Fehler“; er öffnet die Datei mit `NSWorkspace.shared.open` (`c70a664`).
-  - `UpgradeLaunchError` (in `UpgradeLauncher.swift`) liefert die Ursache über `description`; `AppState` schreibt `"Upgrade launch failed: \(error)"` (`HASH`).
+  - `UpgradeLaunchError` (in `UpgradeLauncher.swift`) liefert die Ursache über `description`; `AppState` schreibt `"Upgrade launch failed: \(error)"` (`62c7d35`).
   - Handprobe: brew umbenannt → Panel zeigt „Homebrew nicht gefunden …“ und „Log öffnen“; die Datei öffnet sich in der App „Konsole“; Rotation mit einer 1,1-MB-Datei ergab `thetap.log.1` (1,0 M laut `ls`) und eine neue kleine `thetap.log`.
 - Phase 6, Schritt 2 – Einstellungsfenster (abgeschlossen am 26.10.2026, `ff90382`):
   - Neue Datei `App/Views/SettingsView.swift` (`Form` mit `.formStyle(.grouped)`, Breite 460): Auswahl „Prüfintervall“ (1, 3, 6, 12, 24 Stunden; 6 Stunden als „Standard“ beschriftet), Schalter „Casks mit eigenem Updater einbeziehen“, Schalter „Mitteilungen senden“, Hinweis mit Knopf „Systemeinstellungen öffnen“ (nur wenn macOS Mitteilungen nicht erlaubt), Knopf „Log im Finder zeigen“. Werte über `@AppStorage`.
@@ -47,7 +48,11 @@ Als Nächstes: Phase 6, Schritt 3 (`scripts/install.sh`), noch nicht begonnen.
   - `AppState.includeGreedy` (liest `UserDefaults` bei jedem Zugriff) steuert `checker.outdated(runUpdate:greedy:)` und `UpgradeLauncher.start(greedy:)`. `startUpgrade(greedy:)` heißt jetzt `startUpgrade()`.
   - `Notifier.isEnabled`, `Notifier.isAllowedBySystem()`; `handle` schreibt `notifiedPackages` auch bei ausgeschalteten Mitteilungen fort und loggt dann `Not sending: notifications are switched off in the settings`.
   - Handprobe: Das Fenster öffnet sich im Vordergrund, das Panel bleibt dabei offen; jede Intervalländerung erzeugte `Check interval changed to … s` und `Timer set: tick every 900 s` im Log; alle Werte blieben nach einem Neustart erhalten; mit ausgeschalteten Mitteilungen kam keine Mitteilung (17 neue Pakete nach dem Löschen von `notifiedPackages`); „Log im Finder zeigen“ markiert die Datei; bei verbotenen Mitteilungen erscheinen Hinweis und Knopf, und der Knopf öffnet die Seite „Mitteilungen“ der Systemeinstellungen. Mit eingeschaltetem „Casks …“ zeigt die Liste ein Paket mehr als ohne.
-- Dokumentation: `PLAN.md` und `docs/RELEASE.md` (Release-Anleitung samt `release.yml`) liegen im Repo.
+- Phase 6, Schritt 3 – Installation (abgeschlossen am 26.10.2026, Push `5c5661c`):
+  - `scripts/build.sh` nimmt als ersten Parameter die Konfiguration (`Debug` oder `Release`, Standard `Debug`); weitere Parameter gehen unverändert an `xcodebuild`. Ohne Parameter verhält es sich wie vorher (die CI ist unverändert).
+  - Neu: `scripts/install.sh`: `scripts/build.sh Release ONLY_ACTIVE_ARCH=YES` (nur die Architektur dieses Macs), laufende TheTap beenden (SIGTERM, bis 5 s warten), alte Kopie in `/Applications` löschen, neue mit `ditto` aus `build/Build/Products/Release/TheTap.app` kopieren, `codesign --verify --deep --strict`, App starten.
+  - Handprobe: `build.sh` ohne Parameter und `install.sh` ergaben `** BUILD SUCCEEDED **`; `pgrep -fl TheTap` zeigt den Pfad unter `/Applications/TheTap.app/Contents/MacOS/`; `codesign -dv`: `Identifier=io.github.muunleit-projects.thetap`, `Signature=adhoc`, `TeamIdentifier=not set`; `lipo -archs`: `arm64`. Die Mitteilungs-Erlaubnis blieb erhalten; ein zweiter Lauf von `install.sh` (Ersetzen einer vorhandenen Kopie) lief ohne Fehler.
+- Dokumentation: `PLAN.md` und `docs/RELEASE.md` (Release-Anleitung samt `release.yml`) liegen im Repo. `.github/workflows/release.yml` selbst gibt es noch nicht (Phase 7a).
 
 ## Erkenntnisse
 
@@ -74,34 +79,39 @@ Als Nächstes: Phase 6, Schritt 3 (`scripts/install.sh`), noch nicht begonnen.
 - Ein `Settings`-Fenster kommt in der `MenuBarExtra`-App ohne Dock-Icon mit `NSApp.activate()` in `onAppear` nach vorne (Handprobe 26.10.2026); das Panel schließt sich dabei nicht.
 - Die URL `x-apple.systempreferences:com.apple.Notifications-Settings.extension` öffnet unter macOS 26 die Seite „Mitteilungen“ der Systemeinstellungen (Handprobe 26.10.2026). Der Code fällt auf `x-apple.systempreferences:` zurück, falls `open` `false` liefert; dieser Rückfall ist nicht getestet.
 - Mitteilungs-Erlaubnis beim ersten Start (Handprobe 22.10.): macOS zeigt ein Banner „Mitteilungen von „TheTap““ („Mitteilungen können Hinweise, Töne und Symbolkennzeichen sein.“, die Knöpfe waren im Screenshot nicht zu sehen). Ein Klick darauf öffnet die Systemeinstellungen (Mitteilungen → TheTap); dort schaltet der Nutzer „Mitteilungen erlauben“ (Schalter oben rechts) ein. Davor loggte die Prüfung `Not sending: notifications are not allowed (1 new)` und schrieb die Pakete trotzdem in `notifiedPackages` (so vorgesehen); die Erlaubnis-Anfrage lief rund 43 Sekunden und endete mit „Authorization request failed: Notifications are not allowed for this application“. Nach Angabe des Nutzers musste die App nach dem Erteilen einmal beendet und neu gestartet werden; danach `Authorization granted`. Warum der Neustart nötig war, ist ungeklärt (`notificationSettings()` wird bei jeder Mitteilung neu gelesen).
-- Mitteilungen funktionieren mit der Ad-hoc-Signierung des lokalen Builds, und die Erlaubnis bleibt nach einem Neubau mit `scripts/run.sh` erhalten (22.10.: `Authorization granted` ohne neue Abfrage). Die Aktion „Alles aktualisieren“ erscheint als Knopf in der Mitteilung in der Mitteilungszentrale.
+- Mitteilungen funktionieren mit der Ad-hoc-Signierung des lokalen Builds, und die Erlaubnis bleibt nach einem Neubau mit `scripts/run.sh` erhalten (22.10.: `Authorization granted` ohne neue Abfrage). Das gilt nach Angabe des Nutzers auch für die Release-Kopie in `/Applications` nach `scripts/install.sh` (26.10.2026). Die Aktion „Alles aktualisieren“ erscheint als Knopf in der Mitteilung in der Mitteilungszentrale.
 - Nach einem Update von `hello` stand `notifiedPackages` bei 0 Einträgen; als `hello` wieder veraltet war, kam erneut genau eine Mitteilung.
 - SF Symbols auf dem Mac des Nutzers bestätigt: `mug`, `mug.fill`, `arrow.triangle.2.circlepath`, `pin`, `exclamationmark.triangle`.
 - `brew upgrade` kennt `--no-ask` (kurz `-y`) und `--greedy` (kurz `-g`) in der installierten Homebrew-Version.
 - `.command`-Dateien öffnen sich auf dem Mac des Nutzers in der Terminal-App (nicht iTerm).
 - Terminal schließt das Fenster, sobald die Shell sauber endet. Deshalb wartet das Upgrade-Skript am Ende mit `read -k 1` auf einen Tastendruck; der Recheck wird vorher ausgelöst.
 - `application(_:open:)` im `AppDelegate` empfängt URLs auch bei einer reinen `MenuBarExtra`-App ohne Fenster.
-- `scripts/build.sh` baut mit `-derivedDataPath build`; die App liegt danach unter `build/Build/Products/Debug/TheTap.app`. `scripts/run.sh` beendet die laufende Instanz selbst; wer die App von Hand mit `open` startet, muss sie vorher über „Beenden“ schließen.
+- `scripts/build.sh` baut mit `-derivedDataPath build`; Debug liegt unter `build/Build/Products/Debug/TheTap.app`, Release (`install.sh`) unter `build/Build/Products/Release/TheTap.app`. `scripts/run.sh` beendet die laufende Instanz selbst (auch die Kopie aus `/Applications`) und startet den Debug-Build; danach startet der Nutzer die installierte Kopie mit `open /Applications/TheTap.app`. Wer die App von Hand mit `open` startet, muss sie vorher über „Beenden“ schließen.
+- `install.sh` baut mit `ONLY_ACTIVE_ARCH=YES`: Die installierte Kopie enthält nur `arm64`. Universal-Builds (Apple Silicon und Intel) entstehen erst in Phase 7a auf dem Runner.
 - Die `xcodebuild`-Meldung „Using the first of multiple matching destinations“ ist harmlos.
 
 ## Offene Probleme
 
+- Das CI-Ergebnis für `5c5661c` ist nicht gemeldet; die CI baut nur Debug (`build.sh` ohne Parameter). Prüfen, ob sie grün ist.
+- Warnungen im Release-Build wurden nicht ausgewertet (gemeldet wurde nur `** BUILD SUCCEEDED **`). Bei Bedarf: `scripts/build.sh Release ONLY_ACTIVE_ARCH=YES 2>&1 | grep -i warning`.
 - Scroll-Grenze der Paketliste (ab 12 Zeilen) ist ungetestet, weil bisher zu wenige Pakete veraltet waren. Risiko gering; prüfen, sobald einmal viele Pakete veraltet sind (am 26.10. waren 17 Pakete neu veraltet; falls die Liste dabei gesehen wurde, hier nachtragen).
 - `.vscode/settings.json` gibt es bewusst nicht: Die Einstellung `swift.searchSubfoldersForPackages` existiert in der installierten Erweiterung nicht (vorhanden ist `swift.ignoreSearchingForPackagesInSubfolders`). Noch zu prüfen: Findet die Erweiterung `Packages/BrewCheck` von selbst (keine roten Fehler in den Quelldateien, Tests in der Seitenleiste)? Falls nicht, passende Einstellung ergänzen.
-- Mitteilungs-Erlaubnis: Warum nach dem ersten Erteilen ein Neustart nötig war, ist ungeklärt; der genaue Wortlaut der Knöpfe im Banner ist nicht notiert. Beides wichtig für die README (Phase 7a); beim nächsten frischen Start einer neuen Kopie (Phase 6/7) beobachten.
+- Mitteilungs-Erlaubnis: Warum nach dem ersten Erteilen ein Neustart nötig war, ist ungeklärt; der genaue Wortlaut der Knöpfe im Banner ist nicht notiert. Beides wichtig für die README (Phase 7a); beim nächsten frischen Start einer neuen Kopie (Phase 7) beobachten.
 - Der Fehlerpfad von `UpgradeLauncher` (Skript nicht schreibbar, Terminal nicht zu öffnen) ist nicht von Hand getestet. Bei `cannotOpenScript` steht nur der Pfad im Log, weil `NSWorkspace.open` keinen Grund liefert.
 - „Log öffnen“ tut nichts, wenn die Datei nicht existiert (z. B. weil das Schreiben ins Log selbst scheiterte); der Rückgabewert von `NSWorkspace.open` wird nicht ausgewertet.
 - Steht in `checkInterval` ein Wert außerhalb der Auswahl (z. B. 180 von Testläufen), zeigt das Auswahlfeld im Einstellungsfenster keinen Eintrag an; die App nutzt den Wert trotzdem. Nach Tests mit `defaults delete io.github.muunleit-projects.thetap checkInterval` zurücksetzen.
 - Eine geänderte Einstellung „Casks mit eigenem Updater“ wirkt erst ab der nächsten Prüfung; die angezeigte Liste bleibt bis dahin unverändert.
-- Noch nicht umgesetzt: Installation, Login-Start (mit Schalter in den Einstellungen), App-Icon (Phase 6, Schritte 3 bis 5).
+- `install.sh` setzt Schreibrechte in `/Applications` voraus; beim Nutzer ging es ohne Fehler.
+- Noch nicht umgesetzt: Login-Start (mit Schalter in den Einstellungen) und App-Icon (Phase 6, Schritte 4 und 5).
 - Offen bleiben in PLAN.md unter „Offene Punkte“: Signierung im Alltag (nur noch Login-Start, Phase 6), Updates mit Ad-hoc-Signierung (Phase 7b) und Standardwerte (nach einer Woche Alltag).
 
 ## Nächster Schritt
 
-Phase 6, Schritt 3 – Installation, nach „Phasenplan → Phase 6“ in PLAN.md:
+Phase 6, Schritt 4 – Beim Anmelden starten, nach „Einstellungen (Phase 6)“ in PLAN.md:
 
-- `scripts/install.sh`: Release-Build bauen, laufende TheTap beenden, nach `/Applications` kopieren und starten. Ab jetzt läuft im Alltag nur diese Kopie.
-- `scripts/run.sh` beendet sie beim Entwickeln; danach startet der Nutzer sie wieder mit `open /Applications/TheTap.app`.
-- Offen vor dem Bauen: Wie der Release-Build in `build.sh` bzw. im neuen Skript ausgewählt wird (Konfiguration `Release`, Ausgabeordner) und wie eine bereits vorhandene Kopie in `/Applications` ersetzt wird; das klärt der Schritt anhand von `build.sh` und `run.sh`.
+- `SettingsView` bekommt einen Schalter „Beim Anmelden starten“ mit `SMAppService.mainApp.register()` bzw. `unregister()`.
+- Den Status bei jedem Öffnen des Fensters aus `SMAppService.mainApp.status` lesen, weil der Nutzer ihn auch in den Systemeinstellungen ändern kann (z. B. `requiresApproval` behandeln).
+- Nur mit der Kopie in `/Applications` einschalten und testen; vorher sicherstellen, dass keine Debug-Kopie läuft.
+- Offen: Wie sich die Zustände von `SMAppService.Status` in der Oberfläche zeigen und wie Fehler von `register()` angezeigt werden; das klärt der Schritt. Ob der Login-Start mit Ad-hoc-Signierung zuverlässig geht, ist unbekannt und wird in diesem Schritt geprüft (siehe „Signierung im Alltag“ in PLAN.md).
 
-Im neuen Chat hochladen: `PLAN.md`, `STATUS.md`, `scripts/build.sh`, `scripts/run.sh`, `project.yml` und `.github/workflows/release.yml` (falls vorhanden, als Vorbild für den Release-Build).
+Im neuen Chat hochladen: `PLAN.md`, `STATUS.md`, `App/Views/SettingsView.swift`, `App/TheTapApp.swift`, `App/AppDelegate.swift`.
