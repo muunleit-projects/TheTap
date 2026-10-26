@@ -286,13 +286,13 @@ read -k 1 "?Zum Schließen eine beliebige Taste drücken …"
 
 ### Einstellungen (Phase 6)
 
-SwiftUI-`Settings`-Szene, geöffnet über `SettingsLink` im Panel. In einer App ohne Dock-Icon erscheint das Fenster leicht hinter anderen Fenstern; stell sicher, dass es nach vorne kommt (`NSApp.activate()`). Werte mit `@AppStorage` speichern.
+SwiftUI-`Settings`-Szene (`App/Views/SettingsView.swift`), geöffnet über `SettingsLink` („Einstellungen …“) im Panel. In einer App ohne Dock-Icon erscheint das Fenster leicht hinter anderen Fenstern; `NSApp.activate()` in `onAppear` bringt es nach vorne (geprüft am 26.10.2026). Werte werden mit `@AppStorage` gespeichert; die Schlüssel stehen als `nonisolated static` in `AppState` und `Notifier`, damit Swift 6 sie im View zulässt.
 
-- Prüfintervall: 1, 3, 6, 12 oder 24 Stunden, Standard 6, gespeichert unter `checkInterval` in Sekunden. Ändert sich der Wert, legt der Scheduler den Wecker neu an.
-- Beim Anmelden starten: `SMAppService.mainApp.register()` bzw. `unregister()`. Den Status bei jedem Öffnen aus `SMAppService.mainApp.status` lesen, weil der Nutzer ihn auch in den Systemeinstellungen ändern kann. Nur mit der Kopie in `/Applications` einschalten und testen: Bei zwei Kopien mit derselben Bundle-ID ist nicht verlässlich, welche beim Anmelden startet.
-- Mitteilungen senden (an/aus). Sind sie in den Systemeinstellungen verboten, einen Hinweis mit Knopf dorthin zeigen.
-- Casks mit eigenem Updater einbeziehen (`--greedy`), Standard an. Gilt für Prüfung und Upgrade; bis dahin ist beides fest an.
-- Knopf „Log im Finder zeigen“.
+- Prüfintervall (Schritt 2 ✓): 1, 3, 6, 12 oder 24 Stunden, Standard 6, gespeichert unter `checkInterval` in Sekunden. Ändert sich der Wert, ruft das Fenster `AppState.checkIntervalChanged()`; der `AppDelegate` hat dort `scheduler.restartActivity()` als Rückruf (`onCheckIntervalChange`) eingetragen, der Scheduler legt den Wecker also ohne Neustart neu an. Ein Wert außerhalb der Auswahl (z. B. 180 zum Testen) gilt weiter, wird im Auswahlfeld aber nicht angezeigt.
+- Mitteilungen senden (Schritt 2 ✓): `notificationsEnabled`, Standard an. `Notifier.handle` schreibt `notifiedPackages` auch bei „aus“ fort. Erlaubt macOS keine Mitteilungen, zeigt das Fenster einen Hinweis und den Knopf „Systemeinstellungen öffnen“ (`x-apple.systempreferences:com.apple.Notifications-Settings.extension`, Rückfall auf die Systemeinstellungen allgemein); der Status wird beim Öffnen und bei jedem Aktivwerden der App neu gelesen.
+- Casks mit eigenem Updater einbeziehen (`--greedy`) (Schritt 2 ✓): `includeGreedy`, Standard an. Gilt für Prüfung (`BrewChecker.outdated(greedy:)`) und Upgrade (`UpgradeLauncher.start(greedy:)`), jeweils ab dem nächsten Aufruf; `AppState.startUpgrade()` liest die Einstellung selbst.
+- Knopf „Log im Finder zeigen“ (Schritt 2 ✓): markiert `thetap.log` im Finder, öffnet sonst den Ordner, falls er existiert.
+- Beim Anmelden starten (Schritt 4): `SMAppService.mainApp.register()` bzw. `unregister()`. Den Status bei jedem Öffnen aus `SMAppService.mainApp.status` lesen, weil der Nutzer ihn auch in den Systemeinstellungen ändern kann. Nur mit der Kopie in `/Applications` einschalten und testen: Bei zwei Kopien mit derselben Bundle-ID ist nicht verlässlich, welche beim Anmelden startet.
 
 ## Fehlerbehandlung und Logging
 
@@ -390,17 +390,14 @@ Abnahme (für Tests mit `checkInterval` von 3 Minuten, danach zurücksetzen):
 - [x] Die Aktion „Alles aktualisieren“ in der Mitteilung startet das Upgrade
 - [x] Erlaubnis und Mitteilungen funktionieren auch nach einem Neubau mit `scripts/run.sh` (klärt den offenen Punkt „Signierung im Alltag“ für Mitteilungen)
 
-### Phase 6 – Einstellungen, Login-Start, Feinschliff
-
-1. **Logdatei** ✓ – abgeschlossen am 22.10.2026 (`5ebc449`, `c70a664` und die Änderung am `UpgradeLauncher`); nach „Fehlerbehandlung und Logging“; „Log öffnen“ in der Phase „Fehler“.
-2. **Einstellungsfenster** – `Settings`-Szene, `SettingsLink` im Panel, Fenster nach vorne; Prüfintervall, Mitteilungen an/aus, `--greedy`, „Log im Finder zeigen“.
+2. **Einstellungsfenster** ✓ – abgeschlossen am 26.10.2026 (`ff90382`); `Settings`-Szene, `SettingsLink` im Panel, Fenster nach vorne; Prüfintervall, Mitteilungen an/aus, `--greedy`, „Log im Finder zeigen“; Spezifikation unter „Einstellungen (Phase 6)“.
 3. **Installation** – `scripts/install.sh`: Release-Build, laufende TheTap beenden, nach `/Applications` kopieren und starten. Ab jetzt läuft im Alltag nur diese Kopie. `scripts/run.sh` beendet sie beim Entwickeln; danach startet der Nutzer sie wieder mit `open /Applications/TheTap.app`.
 4. **Beim Anmelden starten** – `SMAppService` in den Einstellungen; nur mit der Kopie in `/Applications` einschalten und testen.
 5. **App-Icon** – Woher das Bild (1024 × 1024 Pixel) kommt, klärt die KI vorher mit dem Nutzer. Ein Skript erzeugt daraus mit `sips` die Größen für `App/Assets.xcassets/AppIcon.appiconset`; `project.yml` setzt `ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon`. Vorher prüfen, ob macOS 26 ein solches Icon-Set noch richtig darstellt. Apples neues Werkzeug Icon Composer wäre eine eigene App und damit eine Ausnahme von der VS-Code-Regel.
 6. **Eine Woche Alltag** – danach die Standardwerte prüfen (offener Punkt).
 
-- [ ] Die Einstellungen öffnen sich im Vordergrund; alle Werte bleiben nach einem Neustart der App erhalten
-- [ ] Ein geändertes Prüfintervall wirkt ohne Neustart der App
+- [x] Die Einstellungen öffnen sich im Vordergrund; alle Werte bleiben nach einem Neustart der App erhalten
+- [x] Ein geändertes Prüfintervall wirkt ohne Neustart der App
 - [ ] „Beim Anmelden starten“ funktioniert nach Ab- und Anmelden
 - [x] Bei einem Fehler entsteht die Logdatei unter `~/Library/Logs/TheTap/`; „Log öffnen“ zeigt sie
 - [ ] Die App hat ein eigenes Icon im Finder und in Mitteilungen

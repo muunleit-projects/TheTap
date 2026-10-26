@@ -1,20 +1,20 @@
 # TheTap – Status
 
-Stand: 22.10.2026
+Stand: 26.10.2026
 
 ## Aktuelle Phase
 
-Phase 6 – Einstellungen, Login-Start, Feinschliff: Schritt 1 (Logdatei) abgeschlossen und geprüft.
-Als Nächstes: Phase 6, Schritt 2 (Einstellungsfenster), noch nicht begonnen.
+Phase 6 – Einstellungen, Login-Start, Feinschliff: Schritt 1 (Logdatei) und Schritt 2 (Einstellungsfenster) abgeschlossen und geprüft.
+Als Nächstes: Phase 6, Schritt 3 (`scripts/install.sh`), noch nicht begonnen.
 
 ## Umgebung
 
-- Repo: https://github.com/muunleit-projects/TheTap (Branch `main`), lokal unter `~/Programmieren/swift/TheTap`. Commits dieses Chats: `3e0a17d` (PLAN.md und STATUS.md nach Phase 5), `5ebc449` (Tests für `logDetails`), `c70a664` (Logdatei, „Log öffnen“), `HASH` (UpgradeLauncher schreibt die Ursache ins Log; letzter Push, CI grün). Phase 5 endete mit `a8c0114`, Phase 4 mit `64eaa17`.
+- Repo: https://github.com/muunleit-projects/TheTap (Branch `main`), lokal unter `~/Programmieren/swift/TheTap`. Commits der letzten Chats: `3e0a17d` (PLAN.md und STATUS.md nach Phase 5), `5ebc449` (Tests für `logDetails`), `c70a664` (Logdatei, „Log öffnen“), `HASH` (UpgradeLauncher schreibt die Ursache ins Log), `ff90382` (Einstellungsfenster; letzter Push, CI grün). Phase 5 endete mit `a8c0114`, Phase 4 mit `64eaa17`.
 - Mac: macOS 26, Xcode 27.1, Swift 6.4, xcodegen 2.46.0, Homebrew 7.0.9, git 2.54.0. brew liegt unter `/opt/homebrew/bin/brew` (normale Datei, kein Symlink).
 - VS Code mit der Swift-Erweiterung (swiftlang) ist installiert.
 - CI: `.github/workflows/ci.yml` läuft auf dem Runner `macos-26` mit Xcode 26.6 und Swift 6.3.3, also älter als der Mac. Regeln dazu in PLAN.md unter „Feste Entscheidungen → Toolchain“. Die CI führt `swift test`, die Installation von XcodeGen und `scripts/build.sh` ohne `if:`-Bedingungen aus; nichts wird still übersprungen.
 - Tests: 78 Tests in 7 Suites, lokal (auch mit `HOMEBREW_NO_AUTO_UPDATE=1`) und in der CI grün.
-- `checkInterval` ist nicht gesetzt, es gilt der Standard von 6 Stunden.
+- `checkInterval` ist nicht gesetzt, es gilt der Standard von 6 Stunden (oder der Wert, den der Nutzer im Einstellungsfenster zuletzt gewählt hat).
 - Claude kann Dateien aus dem GitHub-Repo nicht selbst lesen (GitHub sperrt den automatischen Zugriff auf die Unterordner). Dateien, um die es geht, lädt der Nutzer in den Chat hoch oder kopiert sie hinein.
 
 ## Erledigt
@@ -23,12 +23,12 @@ Als Nächstes: Phase 6, Schritt 2 (Einstellungsfenster), noch nicht begonnen.
 - Phase 1: Package `Packages/BrewCheck` mit Bibliothek `BrewCheck` (Models, BrewLocator, CommandRunner, ProcessRunner, OutdatedParser, BrewChecker, Policies) und Tests. `BrewChecker.init`-Parameter: `runner`, `locator`, `baseEnvironment`, `updateTimeout`, `outdatedTimeout`.
 - Phase 2: `BrewCheckError.userMessage` (deutsche Kurztexte, für CLI und App gemeinsam) und die CLI `brewcheck-cli`. Abgenommen.
 - Phase 3 (abgenommen): `project.yml`, `scripts/build.sh`, `scripts/run.sh`, `AppState`, `MenuBarLabel`, `PackageListView`, `PanelView`, `TheTapApp` mit `MenuBarExtra` im Stil `.window`.
-- Phase 4 (abgenommen): `UpgradeScript` in BrewCheck, `App/UpgradeLauncher.swift`, `AppState` mit `canUpgrade`, `startUpgrade(greedy:)`, `finishUpgrade()`, `recheckAfterUpgrade()`; `AppDelegate` verarbeitet `thetap://recheck`; Knopf „Alles aktualisieren“. Der Zustand „Upgrade läuft“ endet nach 2 Stunden von selbst, falls kein Recheck kommt.
+- Phase 4 (abgenommen): `UpgradeScript` in BrewCheck, `App/UpgradeLauncher.swift`, `AppState` mit `canUpgrade`, `startUpgrade()`, `finishUpgrade()`, `recheckAfterUpgrade()`; `AppDelegate` verarbeitet `thetap://recheck`; Knopf „Alles aktualisieren“. Der Zustand „Upgrade läuft“ endet nach 2 Stunden von selbst, falls kein Recheck kommt.
 - Phase 5 (abgenommen am 22.10.2026), Kurzfassung:
   - Schritt 1 (`8c568ca`): `NetworkMonitor` (`NWPathMonitor`), `AppState.networkChanged(isOnline:)`; ein Fehlschlag ohne Netz ergibt „Offline“.
   - Schritt 2 (`af55f21`): `Policies.failuresBeforeError`, `showsFailure`, `notificationText` samt Tests. `consecutiveFailures` zählt den aktuellen Fehlschlag mit; ein automatischer Fehler wird ab dem 3. Fehlschlag in Folge sichtbar.
   - Schritt 3 (`56688cb`): `AppState.checkIfDue()` mit den vier Bedingungen und Logging (Kategorie `scheduler`); `checkInterval` aus `UserDefaults` (Standard 21600 s); vorgemerkter Recheck (`recheckPending`); `restorePhase()`.
-  - Schritt 4 (`8536dbf`): `App/Scheduler.swift` (Start nach 10 s, `NSBackgroundActivityScheduler` mit Takt `checkInterval / 3`, höchstens 15 Minuten, Aufwachen mit 60 s Wartezeit); `restartActivity()` für Phase 6.
+  - Schritt 4 (`8536dbf`): `App/Scheduler.swift` (Start nach 10 s, `NSBackgroundActivityScheduler` mit Takt `checkInterval / 3`, höchstens 15 Minuten, Aufwachen mit 60 s Wartezeit); `restartActivity()`.
   - Schritt 5 (`914f0de`): `checkNow(runUpdate:manual:)`; manuelle und automatische Prüfungen; stille Fehlschläge lassen Liste und Phase stehen. „Jetzt prüfen“ ist während eines Upgrades deaktiviert (Entscheidung des Nutzers).
   - Schritt 6 (`56f4b6a`): `App/Notifier.swift` mit Erlaubnis, `handle(_:)` und Fortschreibung von `notifiedPackages` (immer vor dem ersten `await`).
   - Schritt 7 (`a8c0114`): Kategorie `thetap.updates` mit Aktion `thetap.upgrade`, `AppDelegate` als `UNUserNotificationCenterDelegate`.
@@ -39,6 +39,14 @@ Als Nächstes: Phase 6, Schritt 2 (Einstellungsfenster), noch nicht begonnen.
   - `PanelView`: Knopf „Log öffnen“ neben „Jetzt prüfen“, nur in der Phase „Fehler“; er öffnet die Datei mit `NSWorkspace.shared.open` (`c70a664`).
   - `UpgradeLaunchError` (in `UpgradeLauncher.swift`) liefert die Ursache über `description`; `AppState` schreibt `"Upgrade launch failed: \(error)"` (`HASH`).
   - Handprobe: brew umbenannt → Panel zeigt „Homebrew nicht gefunden …“ und „Log öffnen“; die Datei öffnet sich in der App „Konsole“; Rotation mit einer 1,1-MB-Datei ergab `thetap.log.1` (1,0 M laut `ls`) und eine neue kleine `thetap.log`.
+- Phase 6, Schritt 2 – Einstellungsfenster (abgeschlossen am 26.10.2026, `ff90382`):
+  - Neue Datei `App/Views/SettingsView.swift` (`Form` mit `.formStyle(.grouped)`, Breite 460): Auswahl „Prüfintervall“ (1, 3, 6, 12, 24 Stunden; 6 Stunden als „Standard“ beschriftet), Schalter „Casks mit eigenem Updater einbeziehen“, Schalter „Mitteilungen senden“, Hinweis mit Knopf „Systemeinstellungen öffnen“ (nur wenn macOS Mitteilungen nicht erlaubt), Knopf „Log im Finder zeigen“. Werte über `@AppStorage`.
+  - Schlüssel in `UserDefaults`: `checkInterval` (Sekunden), `includeGreedy` (Standard an), `notificationsEnabled` (Standard an). Die statischen Schlüssel in `AppState` und `Notifier` sind `nonisolated`, damit `@AppStorage` sie in Swift 6 lesen darf.
+  - `TheTapApp` hat eine `Settings`-Szene; `PanelView` zeigt `SettingsLink` („Einstellungen …“) neben „Beenden“ in einer eigenen Zeile. Das Fenster ruft in `onAppear` `NSApp.activate()` auf.
+  - Intervalländerung: `AppState.checkIntervalChanged()` ruft den Rückruf `onCheckIntervalChange`; der `AppDelegate` setzt ihn nach dem Start des Schedulers auf `scheduler.restartActivity()`.
+  - `AppState.includeGreedy` (liest `UserDefaults` bei jedem Zugriff) steuert `checker.outdated(runUpdate:greedy:)` und `UpgradeLauncher.start(greedy:)`. `startUpgrade(greedy:)` heißt jetzt `startUpgrade()`.
+  - `Notifier.isEnabled`, `Notifier.isAllowedBySystem()`; `handle` schreibt `notifiedPackages` auch bei ausgeschalteten Mitteilungen fort und loggt dann `Not sending: notifications are switched off in the settings`.
+  - Handprobe: Das Fenster öffnet sich im Vordergrund, das Panel bleibt dabei offen; jede Intervalländerung erzeugte `Check interval changed to … s` und `Timer set: tick every 900 s` im Log; alle Werte blieben nach einem Neustart erhalten; mit ausgeschalteten Mitteilungen kam keine Mitteilung (17 neue Pakete nach dem Löschen von `notifiedPackages`); „Log im Finder zeigen“ markiert die Datei; bei verbotenen Mitteilungen erscheinen Hinweis und Knopf, und der Knopf öffnet die Seite „Mitteilungen“ der Systemeinstellungen. Mit eingeschaltetem „Casks …“ zeigt die Liste ein Paket mehr als ohne.
 - Dokumentation: `PLAN.md` und `docs/RELEASE.md` (Release-Anleitung samt `release.yml`) liegen im Repo.
 
 ## Erkenntnisse
@@ -52,16 +60,19 @@ Als Nächstes: Phase 6, Schritt 2 (Einstellungsfenster), noch nicht begonnen.
 - `NWPathMonitor` meldet bei einem Wechsel mehrfach (z. B. zweimal „offline“ oder zweimal „online“ kurz nacheinander). Der `AppDelegate` loggt jede Meldung; `AppState.networkChanged` ignoriert eine Meldung ohne Statuswechsel.
 - `brew outdated` aktualisiert die Homebrew-API-Daten selbst, wenn `HOMEBREW_NO_AUTO_UPDATE` nicht gesetzt ist. Deshalb zeigt ein Lauf mit `--no-update` ggf. weniger Pakete als ein manueller `brew outdated`.
 - Swift 6 erlaubt Top-Level-`await` in `main.swift`; `exit(n)` beendet die CLI mit dem Exit-Code.
-- Swift 6: Eine als `nonisolated` markierte Funktion darf nicht auf Konstanten einer `@MainActor`-Klasse zugreifen (Fehler „main actor-isolated static property … can not be referenced from a nonisolated context“). Deshalb sind `categoryIdentifier` und `upgradeActionIdentifier` in `Notifier` `nonisolated static`.
+- Swift 6: Eine als `nonisolated` markierte Funktion darf nicht auf Konstanten einer `@MainActor`-Klasse zugreifen (Fehler „main actor-isolated static property … can not be referenced from a nonisolated context“). Deshalb sind `categoryIdentifier`, `upgradeActionIdentifier` und `enabledKey` in `Notifier` sowie `checkIntervalKey`, `includeGreedyKey` und `defaultCheckInterval` in `AppState` `nonisolated static`.
 - Swift 6: Der Block von `NSBackgroundActivityScheduler.schedule` wird in `Scheduler.swift` als `@Sendable [weak self] completion in …` geschrieben; das baut lokal (Swift 6.4) und in der CI (Swift 6.3.3). `completion(.finished)` wird direkt im Block aufgerufen, nur der Aufruf von `trigger` läuft in einer `Task { @MainActor … }`.
 - Swift 6: `Notifier` nutzt `UNUserNotificationCenter.current()` als lokale Konstante in den `async`-Methoden; die Delegate-Methoden im `AppDelegate` sind `nonisolated async` und springen für die Aktion per `await` auf eine `@MainActor`-Methode; das baut lokal und in der CI ohne Fehler.
 - `NSBackgroundActivityScheduler` mit Takt 60 s tickte in der Handprobe nach 53 bis 75 s; der erste Tick kam erst nach 108 s. Bei Takt 900 s feuerte der Timer dagegen schon direkt nach dem App-Start (`Trigger: timer`), vor dem Start-Trigger. Das System verschiebt den Wecker also, in beide Richtungen. Der Start-Trigger findet dann nichts mehr fällig (`Skipped: not due yet`), das ist richtig.
 - Nach dem Ruhezustand startete in beiden Handproben schon eine Prüfung, bevor der Wake-Trigger feuerte; welcher Auslöser sie startete, zeigt der Log-Auszug der zweiten Probe nicht. Für die Abnahme war das unerheblich.
+- Der Takt des Weckers ist `min(Intervall / 3, 900 s)`: Schon bei 1 Stunde Prüfintervall (1200 s) greift die Grenze von 900 s, in der Handprobe zeigte das Log für 1, 3, 12 und 24 Stunden jeweils 900 s.
 - Das Systemlog der App lässt sich im Terminal mitlesen: `log stream --predicate 'subsystem == "io.github.muunleit-projects.thetap"'`. `Logger.notice`-Meldungen erscheinen dort ohne weitere Optionen. Erfolgreiche Prüfungen loggt `AppState` nicht selbst; sichtbar sind sie nur über die Zeilen der Kategorie `notifications`.
 - Handprobe für Fehlschläge: `mv /opt/homebrew/bin/brew /opt/homebrew/bin/brew.off` macht brew für `BrewLocator` unauffindbar und ergibt „Homebrew nicht gefunden …“; mit `mv /opt/homebrew/bin/brew.off /opt/homebrew/bin/brew` wieder herstellen. Dabei vorher `which -a brew` prüfen (nur ein Treffer). Danach `which brew` muss wieder `/opt/homebrew/bin/brew` zeigen.
 - Handprobe für die Rotation: `head -c 1100000 /dev/zero | tr '\0' 'x' > ~/Library/Logs/TheTap/thetap.log`, dann einen Fehler auslösen und `ls -l ~/Library/Logs/TheTap/` ansehen.
 - Der Logeintrag zu `brewNotFound` listet alle durchsuchten Ordner, also praktisch den ganzen `PATH` der App mit Pfaden aus dem Home-Verzeichnis. Der Nutzer hat entschieden, das so zu belassen (22.10.2026); relevant nur, falls er das Log je öffentlich teilt.
 - Das Log lässt sich über `NSWorkspace.shared.open` öffnen; macOS startet dafür die App „Konsole“ (Handprobe 22.10.2026).
+- Ein `Settings`-Fenster kommt in der `MenuBarExtra`-App ohne Dock-Icon mit `NSApp.activate()` in `onAppear` nach vorne (Handprobe 26.10.2026); das Panel schließt sich dabei nicht.
+- Die URL `x-apple.systempreferences:com.apple.Notifications-Settings.extension` öffnet unter macOS 26 die Seite „Mitteilungen“ der Systemeinstellungen (Handprobe 26.10.2026). Der Code fällt auf `x-apple.systempreferences:` zurück, falls `open` `false` liefert; dieser Rückfall ist nicht getestet.
 - Mitteilungs-Erlaubnis beim ersten Start (Handprobe 22.10.): macOS zeigt ein Banner „Mitteilungen von „TheTap““ („Mitteilungen können Hinweise, Töne und Symbolkennzeichen sein.“, die Knöpfe waren im Screenshot nicht zu sehen). Ein Klick darauf öffnet die Systemeinstellungen (Mitteilungen → TheTap); dort schaltet der Nutzer „Mitteilungen erlauben“ (Schalter oben rechts) ein. Davor loggte die Prüfung `Not sending: notifications are not allowed (1 new)` und schrieb die Pakete trotzdem in `notifiedPackages` (so vorgesehen); die Erlaubnis-Anfrage lief rund 43 Sekunden und endete mit „Authorization request failed: Notifications are not allowed for this application“. Nach Angabe des Nutzers musste die App nach dem Erteilen einmal beendet und neu gestartet werden; danach `Authorization granted`. Warum der Neustart nötig war, ist ungeklärt (`notificationSettings()` wird bei jeder Mitteilung neu gelesen).
 - Mitteilungen funktionieren mit der Ad-hoc-Signierung des lokalen Builds, und die Erlaubnis bleibt nach einem Neubau mit `scripts/run.sh` erhalten (22.10.: `Authorization granted` ohne neue Abfrage). Die Aktion „Alles aktualisieren“ erscheint als Knopf in der Mitteilung in der Mitteilungszentrale.
 - Nach einem Update von `hello` stand `notifiedPackages` bei 0 Einträgen; als `hello` wieder veraltet war, kam erneut genau eine Mitteilung.
@@ -75,24 +86,22 @@ Als Nächstes: Phase 6, Schritt 2 (Einstellungsfenster), noch nicht begonnen.
 
 ## Offene Probleme
 
-- Scroll-Grenze der Paketliste (ab 12 Zeilen) ist ungetestet, weil bisher zu wenige Pakete veraltet waren. Risiko gering; prüfen, sobald einmal viele Pakete veraltet sind.
+- Scroll-Grenze der Paketliste (ab 12 Zeilen) ist ungetestet, weil bisher zu wenige Pakete veraltet waren. Risiko gering; prüfen, sobald einmal viele Pakete veraltet sind (am 26.10. waren 17 Pakete neu veraltet; falls die Liste dabei gesehen wurde, hier nachtragen).
 - `.vscode/settings.json` gibt es bewusst nicht: Die Einstellung `swift.searchSubfoldersForPackages` existiert in der installierten Erweiterung nicht (vorhanden ist `swift.ignoreSearchingForPackagesInSubfolders`). Noch zu prüfen: Findet die Erweiterung `Packages/BrewCheck` von selbst (keine roten Fehler in den Quelldateien, Tests in der Seitenleiste)? Falls nicht, passende Einstellung ergänzen.
-- `startUpgrade(greedy:)` verwendet bis Schritt 2 fest `greedy: true`; die Einstellung dazu kommt in Phase 6, Schritt 2.
 - Mitteilungs-Erlaubnis: Warum nach dem ersten Erteilen ein Neustart nötig war, ist ungeklärt; der genaue Wortlaut der Knöpfe im Banner ist nicht notiert. Beides wichtig für die README (Phase 7a); beim nächsten frischen Start einer neuen Kopie (Phase 6/7) beobachten.
 - Der Fehlerpfad von `UpgradeLauncher` (Skript nicht schreibbar, Terminal nicht zu öffnen) ist nicht von Hand getestet. Bei `cannotOpenScript` steht nur der Pfad im Log, weil `NSWorkspace.open` keinen Grund liefert.
 - „Log öffnen“ tut nichts, wenn die Datei nicht existiert (z. B. weil das Schreiben ins Log selbst scheiterte); der Rückgabewert von `NSWorkspace.open` wird nicht ausgewertet.
-- Noch nicht umgesetzt: Einstellungen, Installation, Login-Start, App-Icon (Phase 6, Schritte 2 bis 6).
+- Steht in `checkInterval` ein Wert außerhalb der Auswahl (z. B. 180 von Testläufen), zeigt das Auswahlfeld im Einstellungsfenster keinen Eintrag an; die App nutzt den Wert trotzdem. Nach Tests mit `defaults delete io.github.muunleit-projects.thetap checkInterval` zurücksetzen.
+- Eine geänderte Einstellung „Casks mit eigenem Updater“ wirkt erst ab der nächsten Prüfung; die angezeigte Liste bleibt bis dahin unverändert.
+- Noch nicht umgesetzt: Installation, Login-Start (mit Schalter in den Einstellungen), App-Icon (Phase 6, Schritte 3 bis 5).
 - Offen bleiben in PLAN.md unter „Offene Punkte“: Signierung im Alltag (nur noch Login-Start, Phase 6), Updates mit Ad-hoc-Signierung (Phase 7b) und Standardwerte (nach einer Woche Alltag).
 
 ## Nächster Schritt
 
-Phase 6, Schritt 2 – Einstellungsfenster, nach „Einstellungen (Phase 6)“ in PLAN.md:
+Phase 6, Schritt 3 – Installation, nach „Phasenplan → Phase 6“ in PLAN.md:
 
-- `Settings`-Szene in `TheTapApp`, `SettingsLink` im Panel, Fenster kommt nach vorne (`NSApp.activate()`).
-- Prüfintervall (1, 3, 6, 12, 24 Stunden; Schlüssel `checkInterval` in Sekunden); eine Änderung wirkt ohne Neustart, indem der Scheduler `restartActivity()` aufruft.
-- Mitteilungen senden (an/aus); `Notifier.handle` schreibt `notifiedPackages` auch bei „aus“ fort. Sind sie in den Systemeinstellungen verboten, Hinweis mit Knopf dorthin.
-- Casks mit eigenem Updater einbeziehen (`--greedy`), Standard an; gilt für Prüfung und Upgrade (`BrewChecker.outdated(greedy:)`, `startUpgrade(greedy:)`).
-- „Log im Finder zeigen“.
-- Offen vor dem Bauen: Wie der Scheduler von der Intervalländerung erfährt (der `AppDelegate` hält ihn), klärt der Schritt.
+- `scripts/install.sh`: Release-Build bauen, laufende TheTap beenden, nach `/Applications` kopieren und starten. Ab jetzt läuft im Alltag nur diese Kopie.
+- `scripts/run.sh` beendet sie beim Entwickeln; danach startet der Nutzer sie wieder mit `open /Applications/TheTap.app`.
+- Offen vor dem Bauen: Wie der Release-Build in `build.sh` bzw. im neuen Skript ausgewählt wird (Konfiguration `Release`, Ausgabeordner) und wie eine bereits vorhandene Kopie in `/Applications` ersetzt wird; das klärt der Schritt anhand von `build.sh` und `run.sh`.
 
-Im neuen Chat hochladen: `PLAN.md`, `STATUS.md`, `App/TheTapApp.swift`, `App/AppState.swift`, `App/AppDelegate.swift`, `App/Scheduler.swift`, `App/Notifier.swift`, `App/Views/PanelView.swift` und `project.yml`.
+Im neuen Chat hochladen: `PLAN.md`, `STATUS.md`, `scripts/build.sh`, `scripts/run.sh`, `project.yml` und `.github/workflows/release.yml` (falls vorhanden, als Vorbild für den Release-Build).
