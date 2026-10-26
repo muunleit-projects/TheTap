@@ -92,6 +92,7 @@ TheTap/                          # Repo-Wurzel
 │   ├── Notifier.swift           # ab Phase 5
 │   ├── Views/                   # MenuBarLabel, PanelView, PackageListView
 │   ├── Info.plist               # von XcodeGen erzeugt, eingecheckt
+│   ├── LogFile.swift            # ab Phase 6: ~/Library/Logs/TheTap/TheTap.log
 │   └── Assets.xcassets          # ab Phase 6 (App-Icon)
 ├── scripts/
 │   ├── build.sh                 # xcodegen generate + xcodebuild (Debug)
@@ -297,21 +298,22 @@ SwiftUI-`Settings`-Szene, geöffnet über `SettingsLink` im Panel. In einer App 
 
 Die App stürzt nie wegen brew ab und blockiert nie die Oberfläche; jeder Fehler wird geloggt und dem Nutzer kurz und verständlich angezeigt.
 
-- **Systemlog:** `os.Logger` mit der Bundle-ID als Subsystem und den Kategorien `check`, `scheduler`, `upgrade`, `notifications`. Der Nutzer sieht es in der App „Konsole“ (nach dem Subsystem filtern). Bis zur Logdatei in Phase 6 stehen Fehlerdetails nur dort.
-- **Logdatei (Phase 6):** Fehlerdetails (Befehl, Exit-Code, die letzten 200 Zeilen Ausgabe) zusätzlich nach `~/Library/Logs/TheTap/thetap.log`. Ab 1 MB wird die Datei in `thetap.log.1` umbenannt und neu begonnen. Nicht `/tmp` verwenden, das leert macOS.
+- **Systemlog:** `os.Logger` mit der Bundle-ID als Subsystem und den Kategorien `check`, `scheduler`, `upgrade`, `notifications`. Der Nutzer sieht es in der App „Konsole“ (nach dem Subsystem filtern).
+- **Logdatei (seit Phase 6, Schritt 1):** `App/LogFile.swift` schreibt Fehlerdetails nach `~/Library/Logs/TheTap/thetap.log`: Zeitstempel (ISO 8601, lokale Zeit) und Kopfzeile `Check failed (N in a row, manual: …, shown: …)`, darunter `BrewCheckError.logDetails` (Befehl, Exit-Code, die letzten 200 Zeilen Ausgabe). Geloggt wird jeder gezählte Fehlschlag, auch ein stiller; ein Fehlschlag ohne Netz („Offline“) nicht. Fehler beim Starten des Upgrades stehen als `Upgrade could not be started` mit der Ursache aus `UpgradeLaunchError.description` in derselben Datei. Ab 1 MB wird die Datei in `thetap.log.1` umbenannt (eine ältere `.1` wird ersetzt) und neu begonnen. Nicht `/tmp` verwenden, das leert macOS. Schreibfehler landen nur im Systemlog.
+- **„Log öffnen“:** Knopf im Panel, nur in der Phase „Fehler“; öffnet die Logdatei mit `NSWorkspace.shared.open` (auf dem Mac des Nutzers in der App „Konsole“).
 - **Meldungen in der Oberfläche:** eine Zeile auf Deutsch, die sagt, was zu tun ist (`BrewCheckError.userMessage`):
   - `brewNotFound` → „Homebrew nicht gefunden. Erwartet unter /opt/homebrew oder /usr/local.“
   - `timedOut` → „brew hat nicht rechtzeitig geantwortet. Neuer Versuch folgt.“
   - `commandFailed` → „brew meldet einen Fehler. Details im Log.“
   - `invalidJSON` → „Unerwartete Antwort von brew. Details im Log.“
   - `cancelled` → „Die Prüfung wurde abgebrochen.“
-- **Keine sensiblen Daten** ins Log außer der brew-Ausgabe selbst; keine Umgebungsvariablen vollständig loggen.
+- **Keine sensiblen Daten** ins Log außer der brew-Ausgabe selbst; keine Umgebungsvariablen vollständig loggen. Bekannte Ausnahme, vom Nutzer so belassen (22.10.2026): Der Eintrag zu `brewNotFound` listet alle durchsuchten Ordner, also praktisch den `PATH` der App.
 
 ## Teststrategie
 
 Die Bibliothek BrewCheck wird vollständig automatisch getestet, ohne dass dabei echtes brew läuft; die App wird anhand der Abnahmekriterien von Hand geprüft (keine UI-Tests). Testframework ist Swift Testing (`import Testing`), ausgeführt mit `swift test` im Package.
 
-Jede Komponente hat eine eigene Testdatei: `OutdatedParserTests` (Fixtures `real.json` als echte Ausgabe des Nutzers, `empty.json`, `formulae-only.json`, `casks-only.json`, `pinned.json`, `extra-fields.json`, `broken.json`, `blank.json` als leere Datei), `BrewLocatorTests` (injizierter `PATH`), `ProcessRunnerTests` (echte, harmlose Systembefehle: Exit-Codes, getrennte Ausgaben, mehrere MB, Timeout, Abbruch), `BrewCheckerTests` (mit `FakeRunner`: Argumente, Umgebung, Fehlerfälle), `PoliciesTests` (Tabellen inklusive angepinnter Pakete und neuer Versionen), `UpgradeScriptTests`, `ErrorMessageTests` und `ModelsTests`. Neue Regeln bekommen ihre Tests in der passenden Datei.
+Jede Komponente hat eine eigene Testdatei: `OutdatedParserTests` (Fixtures `real.json` als echte Ausgabe des Nutzers, `empty.json`, `formulae-only.json`, `casks-only.json`, `pinned.json`, `extra-fields.json`, `broken.json`, `blank.json` als leere Datei), `BrewLocatorTests` (injizierter `PATH`), `ProcessRunnerTests` (echte, harmlose Systembefehle: Exit-Codes, getrennte Ausgaben, mehrere MB, Timeout, Abbruch), `BrewCheckerTests` (mit `FakeRunner`: Argumente, Umgebung, Fehlerfälle), `PoliciesTests` (Tabellen inklusive angepinnter Pakete und neuer Versionen), `UpgradeScriptTests`, `ErrorMessageTests`, `LogDetailsTests` und `ModelsTests`. Neue Regeln bekommen ihre Tests in der passenden Datei. Code in `App/` (z. B. `LogFile`) liegt außerhalb des Packages und wird von Hand geprüft.
 
 Tests dürfen nie von der Umgebung der Maschine abhängen. Gegenprobe: `HOMEBREW_NO_AUTO_UPDATE=1 swift test` muss ebenfalls grün sein.
 
@@ -390,7 +392,7 @@ Abnahme (für Tests mit `checkInterval` von 3 Minuten, danach zurücksetzen):
 
 ### Phase 6 – Einstellungen, Login-Start, Feinschliff
 
-1. **Logdatei** – nach „Fehlerbehandlung und Logging“; „Log öffnen“ in der Phase „Fehler“.
+1. **Logdatei** ✓ – abgeschlossen am 22.10.2026 (`5ebc449`, `c70a664` und die Änderung am `UpgradeLauncher`); nach „Fehlerbehandlung und Logging“; „Log öffnen“ in der Phase „Fehler“.
 2. **Einstellungsfenster** – `Settings`-Szene, `SettingsLink` im Panel, Fenster nach vorne; Prüfintervall, Mitteilungen an/aus, `--greedy`, „Log im Finder zeigen“.
 3. **Installation** – `scripts/install.sh`: Release-Build, laufende TheTap beenden, nach `/Applications` kopieren und starten. Ab jetzt läuft im Alltag nur diese Kopie. `scripts/run.sh` beendet sie beim Entwickeln; danach startet der Nutzer sie wieder mit `open /Applications/TheTap.app`.
 4. **Beim Anmelden starten** – `SMAppService` in den Einstellungen; nur mit der Kopie in `/Applications` einschalten und testen.
@@ -400,7 +402,7 @@ Abnahme (für Tests mit `checkInterval` von 3 Minuten, danach zurücksetzen):
 - [ ] Die Einstellungen öffnen sich im Vordergrund; alle Werte bleiben nach einem Neustart der App erhalten
 - [ ] Ein geändertes Prüfintervall wirkt ohne Neustart der App
 - [ ] „Beim Anmelden starten“ funktioniert nach Ab- und Anmelden
-- [ ] Bei einem Fehler entsteht die Logdatei unter `~/Library/Logs/TheTap/`; „Log öffnen“ zeigt sie
+- [x] Bei einem Fehler entsteht die Logdatei unter `~/Library/Logs/TheTap/`; „Log öffnen“ zeigt sie
 - [ ] Die App hat ein eigenes Icon im Finder und in Mitteilungen
 - [ ] Die App liegt in `/Applications` und läuft eine Woche ohne Auffälligkeiten
 

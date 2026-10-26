@@ -19,3 +19,6 @@ DerivedData/
 # Packaging leftovers
 *.dSYM
 *.dSYM.zip
+
+# Visual Studio Code
+.vscode/
