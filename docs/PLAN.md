@@ -28,7 +28,7 @@ Der Nutzer hat keine Erfahrung mit Swift und Xcode, aber etwas mit Visual Studio
 - **Fachbegriffe erklären.** Beim ersten Auftreten eines Swift-Begriffs ein Satz Erklärung.
 - **Nichts erfinden.** Bei Unsicherheit über eine Apple-API, ein SF-Symbol oder ein brew-Flag sagst du das offen und lässt den Nutzer nachprüfen (z. B. mit `brew <befehl> --help`), statt zu raten.
 - **Phasen-Abschluss.** Am Ende jeder Phase gehst du die Abnahmekriterien mit dem Nutzer durch; abgehakt wird erst, wenn er sie geprüft hat.
-- **Sprache.** Code, Bezeichner, Kommentare und Commit-Messages auf Englisch; alle Texte, die der Nutzer in der App oder CLI sieht, auf Deutsch.
+- **Sprache.** Code, Bezeichnet, Kommentare und Commit-Messages auf Englisch; alle Texte, die der Nutzer in der App oder CLI sieht, auf Deutsch.
 - **Keine Fremdbibliotheken.** Nur Apple-Frameworks und die Swift-Standardbibliothek. XcodeGen ist ein Werkzeug, keine Abhängigkeit der App.
 - **Git.** Nach jedem abgeschlossenen Schritt nennst du die Befehle zum Committen und Pushen samt Commit-Nachricht. Das generierte `TheTap.xcodeproj` und der Ordner `build/` werden nicht eingecheckt. `App/Info.plist` erzeugt XcodeGen ebenfalls; sie wird aber eingecheckt und nur über `project.yml` geändert. Die GitHub-Actions-Prüfung ist eine zusätzliche Kontrolle; ihr Ergebnis meldet der Nutzer, wenn sie rot wird.
 
