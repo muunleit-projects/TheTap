@@ -4,7 +4,7 @@
 
 TheTap ist eine Menüleisten-App für macOS, die im Hintergrund prüft, welche Homebrew-Pakete veraltet sind. Sie meldet neue Updates per Mitteilung und startet auf Klick alle Upgrades im Terminal.
 
-> **Stand:** TheTap ist noch in Entwicklung, läuft aber schon im Alltag. Fertig gebaute Downloads gibt es noch nicht, du baust die App selbst aus dem Quellcode (siehe [Installation](#installation)). Ein eigenes App-Icon fehlt noch.
+> **Stand:** TheTap ist noch in Entwicklung, läuft aber schon im Alltag. Der erste veröffentlichte Download steht noch aus; bis dahin baust du die App selbst aus dem Quellcode (siehe [Selbst bauen](#selbst-bauen)).
 
 Die Idee stammt von [show_updates](https://github.com/muunleit-projects/show_updates), einer Go-App, die beim Anmelden `brew update` und `brew outdated` ausführt und das Ergebnis in einem Fenster zeigt. TheTap setzt die Idee in Swift neu um: Statt eines Fensters gibt es ein Icon in der Menüleiste, das selbstständig prüft.
 
@@ -53,10 +53,42 @@ Solange das Upgrade läuft, startet TheTap keine eigene Prüfung, damit sich `br
 
 - macOS 26 (Tahoe) oder neuer
 - [Homebrew](https://brew.sh/), installiert unter `/opt/homebrew` (Apple Silicon) oder `/usr/local` (Intel)
+
+Zum [Selbstbauen](#selbst-bauen) kommen hinzu:
+
 - Xcode 26 oder neuer. Gebraucht werden nur Compiler, SDK und `xcodebuild`; die Oberfläche von Xcode musst du nicht öffnen.
 - [XcodeGen](https://github.com/yonaskolb/XcodeGen): `brew install xcodegen`
 
-## Installation
+## Herunterladen und installieren
+
+Fertig gebaute Versionen stehen unter [Releases](https://github.com/muunleit-projects/TheTap/releases). Sie enthalten Code für Apple Silicon und Intel; getestet ist bisher nur Apple Silicon. Vorabversionen sind dort als „Pre-release“ markiert.
+
+1. Die neueste Datei `TheTap-….zip` herunterladen.
+2. Die ZIP im Finder doppelklicken. Daneben entsteht `TheTap.app`.
+3. `TheTap.app` in den Ordner „Programme“ ziehen.
+
+### Erster Start: Freigabe in macOS
+
+TheTap ist ad hoc signiert und nicht notarisiert, weil es kein Apple-Developer-Konto gibt. Deshalb blockiert macOS die heruntergeladene App beim ersten Start, bis du sie freigibst. Die folgenden Texte stammen von macOS 26 auf Deutsch; in anderen Sprachen lauten sie anders.
+
+1. `TheTap.app` in „Programme“ doppelklicken. macOS meldet „„TheTap“ nicht geöffnet“ („Apple konnte nicht überprüfen, ob „TheTap“ frei von Schadsoftware ist …“). Klicke auf **Fertig**, nicht auf „In den Papierkorb legen“.
+2. Öffne die Systemeinstellungen → **Datenschutz & Sicherheit** und scrolle zum Abschnitt „Sicherheit“. Dort steht „„TheTap“ wurde blockiert, um deinen Mac zu schützen.“ Klicke auf **Dennoch öffnen**.
+3. Im Dialog „„TheTap“ öffnen?“ klickst du erneut auf **Dennoch öffnen**.
+4. macOS fragt nach Admin-Benutzernamen und Passwort. Gib sie ein und bestätige mit **OK**. TheTap startet.
+
+Ab dann startet die App ohne Warnung.
+
+Alternativ geht es im Terminal. Der Befehl entfernt die Markierung „aus dem Internet geladen“, danach startet die App ohne Warnung:
+
+```sh
+xattr -dr com.apple.quarantine /Applications/TheTap.app
+```
+
+### Aktualisieren
+
+TheTap über „Beenden“ im Panel schließen, die neue Version herunterladen und die alte in „Programme“ ersetzen. In einem Test blieben beim Ersetzen einer lokal gebauten Kopie durch `TheTap-0.1.0-test.1` die Mitteilungs-Erlaubnis und der Eintrag in den Anmeldeobjekten erhalten. Ob die Freigabe in „Datenschutz & Sicherheit“ bei einer neueren heruntergeladenen Version erneut nötig ist, ist noch nicht geprüft.
+
+## Selbst bauen
 
 ```sh
 git clone https://github.com/muunleit-projects/TheTap.git
@@ -64,7 +96,7 @@ cd TheTap
 scripts/install.sh
 ```
 
-`install.sh` baut die Release-Version für die Architektur deines Macs, beendet eine laufende TheTap, ersetzt `/Applications/TheTap.app`, prüft die Signatur und startet die App. Dafür brauchst du Schreibrechte in `/Applications`.
+`install.sh` baut die Release-Version für die Architektur deines Macs, beendet eine laufende TheTap, ersetzt `/Applications/TheTap.app`, prüft die Signatur und startet die App. Dafür brauchst du Schreibrechte in `/Applications`. Eine selbst gebaute Kopie braucht keine Freigabe in „Datenschutz & Sicherheit“.
 
 **Aktualisieren:** Neuesten Stand holen und das Skript erneut ausführen:
 
@@ -73,7 +105,7 @@ git pull
 scripts/install.sh
 ```
 
-### Erster Start
+## Erster Start
 
 1. Das Tassen-Icon erscheint in der Menüleiste. Etwa 10 Sekunden nach dem Start läuft die erste Prüfung.
 2. macOS fragt mit dem Banner „Mitteilungen von „TheTap““ nach der Erlaubnis für Mitteilungen. Ein Klick auf das Banner öffnet die Systemeinstellungen; schalte dort „Mitteilungen erlauben“ ein. Kommen danach keine Mitteilungen, beende TheTap einmal über „Beenden“ und starte sie neu.
@@ -83,13 +115,13 @@ scripts/install.sh
 
 Das Fenster öffnest du im Panel über „Einstellungen …“. Alle Werte bleiben nach einem Neustart erhalten.
 
-| Einstellung                           | Standard       | Wirkung                                                                                                                                           |
-| ------------------------------------- | -------------- | ------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Beim Anmelden starten                 | aus            | Trägt TheTap in die Anmeldeobjekte von macOS ein. Wartet macOS auf deine Freigabe, führt der Knopf „Anmeldeobjekte öffnen“ dorthin.               |
-| Prüfintervall                         | Alle 6 Stunden | Jede Stunde, alle 3, 6 oder 12 Stunden oder einmal täglich. Eine Änderung wirkt sofort, ohne Neustart.                                            |
-| Casks mit eigenem Updater einbeziehen | an             | Entspricht `brew --greedy` und gilt für Prüfung und Upgrade, jeweils ab dem nächsten Aufruf.                                                      |
+| Einstellung                           | Standard       | Wirkung                                                                                                                                               |
+| ------------------------------------- | -------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Beim Anmelden starten                 | aus            | Trägt TheTap in die Anmeldeobjekte von macOS ein. Wartet macOS auf deine Freigabe, führt der Knopf „Anmeldeobjekte öffnen“ dorthin.                   |
+| Prüfintervall                         | Alle 6 Stunden | Jede Stunde, alle 3, 6 oder 12 Stunden oder einmal täglich. Eine Änderung wirkt sofort, ohne Neustart.                                                |
+| Casks mit eigenem Updater einbeziehen | an             | Entspricht `brew --greedy` und gilt für Prüfung und Upgrade, jeweils ab dem nächsten Aufruf.                                                          |
 | Mitteilungen senden                   | an             | Schaltet die Mitteilungen von TheTap ab. Sind Mitteilungen in macOS nicht erlaubt, zeigt das Fenster einen Knopf, der die Systemeinstellungen öffnet. |
-| Log im Finder zeigen                  | –              | Markiert die Logdatei im Finder.                                                                                                                  |
+| Log im Finder zeigen                  | –              | Markiert die Logdatei im Finder.                                                                                                                      |
 
 „Beim Anmelden starten“ solltest du nur mit der Kopie in `/Applications` einschalten. Gibt es mehrere Kopien der App, ist nicht sicher, welche macOS beim Anmelden startet.
 
@@ -97,12 +129,12 @@ Das Fenster öffnest du im Panel über „Einstellungen …“. Alle Werte bleib
 
 ### Meldungen im Panel
 
-| Meldung                                                                  | Bedeutung                                                                                                              |
-| ------------------------------------------------------------------------ | ---------------------------------------------------------------------------------------------------------------------- |
-| „Homebrew nicht gefunden. Erwartet unter /opt/homebrew oder /usr/local.“ | `brew` liegt an keinem der erwarteten Orte.                                                                            |
-| „brew hat nicht rechtzeitig geantwortet. Neuer Versuch folgt.“           | Zeitlimit überschritten (10 Minuten für `brew update`, 2 Minuten für `brew outdated`).                                 |
+| Meldung                                                                  | Bedeutung                                                                                                             |
+| ------------------------------------------------------------------------ | --------------------------------------------------------------------------------------------------------------------- |
+| „Homebrew nicht gefunden. Erwartet unter /opt/homebrew oder /usr/local.“ | `brew` liegt an keinem der erwarteten Orte.                                                                           |
+| „brew hat nicht rechtzeitig geantwortet. Neuer Versuch folgt.“           | Zeitlimit überschritten (10 Minuten für `brew update`, 2 Minuten für `brew outdated`).                                |
 | „brew meldet einen Fehler. Details im Log.“                              | brew ist mit einem Fehler beendet worden, z. B. weil du gerade selbst einen brew-Befehl ausführst oder das Netz hakt. |
-| „Unerwartete Antwort von brew. Details im Log.“                          | Die Ausgabe von `brew outdated` war kein gültiges JSON.                                                                |
+| „Unerwartete Antwort von brew. Details im Log.“                          | Die Ausgabe von `brew outdated` war kein gültiges JSON.                                                               |
 
 ### Logdatei
 
@@ -156,12 +188,12 @@ scripts/run.sh              # Debug-Build bauen, laufende TheTap beenden, neuen 
 
 Das Projekt ist für VS Code mit der offiziellen [Swift-Erweiterung](https://marketplace.visualstudio.com/items?itemName=swiftlang.swift-vscode) eingerichtet. Über **Terminal → Run Task …** stehen diese Tasks bereit:
 
-| Task        | Befehl                                                      |
-| ----------- | ----------------------------------------------------------- |
-| Test        | `swift test` in `Packages/BrewCheck`                        |
+| Task        | Befehl                                                        |
+| ----------- | ------------------------------------------------------------- |
+| Test        | `swift test` in `Packages/BrewCheck`                          |
 | CLI         | `swift run brewcheck-cli --no-update` in `Packages/BrewCheck` |
-| App bauen   | `scripts/build.sh`                                          |
-| App starten | `scripts/run.sh`                                            |
+| App bauen   | `scripts/build.sh`                                            |
+| App starten | `scripts/run.sh`                                              |
 
 ### Tests
 
@@ -204,9 +236,15 @@ defaults write io.github.muunleit-projects.thetap checkInterval -float 180
 
 Ein Wert außerhalb der Auswahl gilt, wird im Einstellungsfenster aber nicht angezeigt. Danach mit `defaults delete io.github.muunleit-projects.thetap checkInterval` zurücksetzen.
 
-### CI
+### App-Icon
+
+Das Master-Bild liegt als `design/AppIcon-1024.png` (1024 × 1024 Pixel, mit Transparenz) im Repo. `scripts/make-icons.sh` erzeugt daraus mit `sips` die zehn Größen in `App/Assets.xcassets/AppIcon.appiconset`; `project.yml` verweist über `ASSETCATALOG_COMPILER_APPICON_NAME` darauf. Nach einer Änderung am Master-Bild das Skript erneut ausführen.
+
+### CI und Release
 
 GitHub Actions ([`ci.yml`](.github/workflows/ci.yml)) führt bei jedem Push auf `main` und bei jedem Pull Request auf einem macOS-26-Runner die Tests aus und baut die App.
+
+Ein Tag der Form `vX.Y.Z` startet [`release.yml`](.github/workflows/release.yml): Der Workflow testet das Package, baut die App für Apple Silicon und Intel, packt sie als ZIP und hängt sie an einen GitHub-Release. Tags mit Bindestrich (z. B. `v0.2.0-beta.1`) werden als „Pre-release“ veröffentlicht. Den genauen Ablauf beschreibt [`docs/RELEASE.md`](docs/RELEASE.md).
 
 ## Aufbau
 
@@ -223,23 +261,26 @@ TheTap.app ──.command-Skript──► Terminal: brew upgrade ──thetap://
 ```text
 TheTap/
 ├── App/                    # Menüleisten-App: Zustand, Prüfplan, Mitteilungen, Upgrade, Logdatei
-│   └── Views/              # Menüleisten-Icon, Panel, Paketliste, Einstellungen
+│   ├── Views/              # Menüleisten-Icon, Panel, Paketliste, Einstellungen
+│   └── Assets.xcassets/    # App-Icon (aus design/ erzeugt)
 ├── Packages/BrewCheck/
 │   ├── Sources/BrewCheck/     # brew finden und ausführen, JSON parsen, Regeln, Fehlertexte
 │   ├── Sources/BrewCheckCLI/  # brewcheck-cli
 │   └── Tests/BrewCheckTests/  # Tests samt JSON-Beispielen
-├── scripts/                # build.sh, run.sh, install.sh
+├── design/                 # Master-Bild des App-Icons
+├── scripts/                # build.sh, run.sh, install.sh, make-icons.sh
 ├── docs/                   # Bauplan, Status, Release-Anleitung
 ├── project.yml             # XcodeGen-Beschreibung des App-Projekts
-└── .github/workflows/      # CI
+└── .github/workflows/      # CI und Release
 ```
 
 ## Gut zu wissen
 
 - **Keine App Sandbox:** Eine App in der Sandbox dürfte `brew` nicht starten. TheTap führt `brew update` und `brew outdated` aus, `brew upgrade` nur auf deinen Klick. Die App selbst sendet nichts ins Netz; Daten lädt nur brew.
-- **Ad-hoc-Signatur:** TheTap ist ad hoc signiert und nicht notarisiert (kein Apple-Developer-Konto). Für die selbst gebaute Kopie ist das kein Problem: Mitteilungen und der Start beim Anmelden funktionieren damit.
+- **Ad-hoc-Signatur:** TheTap ist ad hoc signiert und nicht notarisiert (kein Apple-Developer-Konto). Für die selbst gebaute Kopie ist das kein Problem: Mitteilungen und der Start beim Anmelden funktionieren damit. Eine heruntergeladene Kopie musst du beim ersten Start freigeben (siehe [Herunterladen und installieren](#herunterladen-und-installieren)).
 - **Gespeicherte Werte:** Einstellungen und die Liste bereits gemeldeter Pakete liegen in den `UserDefaults` unter der Bundle-ID `io.github.muunleit-projects.thetap`.
-- **Geplant:** fertige Downloads über GitHub Releases (Anleitung in [`docs/RELEASE.md`](docs/RELEASE.md)) und ein eigenes App-Icon.
+- **Bekannte Einschränkung:** Das App-Icon erscheint im Finder und in den Anmeldeobjekten. In Mitteilungen und in den Systemeinstellungen unter „Mitteilungen“ zeigt macOS auf dem Entwicklungs-Mac noch ein Platzhalter-Icon; die Ursache ist ungeklärt.
+- **Geplant:** der erste veröffentlichte Release (Anleitung in [`docs/RELEASE.md`](docs/RELEASE.md)).
 
 ## Weitere Dokumentation
 
