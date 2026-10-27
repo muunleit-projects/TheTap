@@ -319,7 +319,7 @@ Tests dürfen nie von der Umgebung der Maschine abhängen. Gegenprobe: `HOMEBREW
 
 ## Phasenplan
 
-Acht Phasen (0 bis 7), jede endet mit einem lauffähigen Stand und Kriterien, die der Nutzer selbst abhakt. Eine Phase beginnt erst, wenn die vorige abgehakt ist. Ausnahme ist Phase 7a: Sie berührt den App-Code nicht und darf jederzeit vorgezogen werden, auch zwischen zwei Schritten einer anderen Phase. Phase 7b folgt nach Phase 6.
+Phasen 0 bis 8 (Phase 7 ist in 7a und 7b geteilt), jede endet mit einem lauffähigen Stand und Kriterien, die der Nutzer selbst abhakt. Eine Phase beginnt erst, wenn die vorige abgehakt ist. Ausnahme ist Phase 7a: Sie berührt den App-Code nicht und darf jederzeit vorgezogen werden, auch zwischen zwei Schritten einer anderen Phase (geschehen am 27.10.2026, zwischen Phase 6 Schritt 5 und 6). Phase 7b folgt nach Phase 6.
 
 Größere Phasen sind in nummerierte Schritte geteilt. Jeder Schritt endet mit grünem `swift test`, grünem `scripts/build.sh` und einem Commit; `STATUS.md` nennt den aktuellen Schritt.
 
@@ -395,30 +395,32 @@ Abnahme (für Tests mit `checkInterval` von 3 Minuten, danach zurücksetzen):
 1. **Logdatei** ✓ – abgeschlossen am 22.10.2026 (`5ebc449`, `c70a664` und die Änderung am `UpgradeLauncher`); nach „Fehlerbehandlung und Logging“; „Log öffnen“ in der Phase „Fehler“.
 2. **Einstellungsfenster** ✓ – abgeschlossen am 26.10.2026 (`ff90382`); `Settings`-Szene, `SettingsLink` im Panel, Fenster nach vorne; Prüfintervall, Mitteilungen an/aus, `--greedy`, „Log im Finder zeigen“; Spezifikation unter „Einstellungen (Phase 6)“.
 3. **Installation** ✓ – abgeschlossen am 26.10.2026 (Push `5c5661c`): `scripts/build.sh` nimmt als ersten Parameter die Konfiguration (Standard `Debug`); `scripts/install.sh` baut Release (`ONLY_ACTIVE_ARCH=YES`, nur die Architektur dieses Macs), beendet die laufende TheTap, ersetzt `/Applications/TheTap.app` per `ditto`, prüft die Signatur und startet die App. Ab jetzt läuft im Alltag nur diese Kopie. `scripts/run.sh` beendet sie beim Entwickeln; danach startet der Nutzer sie wieder mit `open /Applications/TheTap.app`.
-4. **Beim Anmelden starten** – `SMAppService` in den Einstellungen; nur mit der Kopie in `/Applications` einschalten und testen.
-5. **App-Icon** – Woher das Bild (1024 × 1024 Pixel) kommt, klärt die KI vorher mit dem Nutzer. Ein Skript erzeugt daraus mit `sips` die Größen für `App/Assets.xcassets/AppIcon.appiconset`; `project.yml` setzt `ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon`. Vorher prüfen, ob macOS 26 ein solches Icon-Set noch richtig darstellt. Apples neues Werkzeug Icon Composer wäre eine eigene App und damit eine Ausnahme von der VS-Code-Regel.
-6. **Eine Woche Alltag** – danach die Standardwerte prüfen (offener Punkt).
+4. **Beim Anmelden starten** ✓ – abgeschlossen am 26.10.2026 (Push `7de6bf9`, CI grün): `SMAppService` in den Einstellungen; geprüft mit der Kopie in `/Applications` nach Ab- und Anmelden.
+5. **App-Icon** ✓ (bis auf Mitteilungen) – abgeschlossen am 27.10.2026 (`ecfb5c1`). Das Master-Bild (1024 × 1024 Pixel, RGBA, vom Nutzer bereitgestellt) liegt als `design/AppIcon-1024.png` im Repo; `scripts/make-icons.sh` erzeugt daraus mit `sips` die zehn Größen für `App/Assets.xcassets/AppIcon.appiconset`; `project.yml` setzt `ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon`. Geprüft: Finder (Launchpad) und Anmeldeobjekte zeigen das Icon. In Mitteilungen und in den Systemeinstellungen unter „Mitteilungen“ erscheint weiter ein Platzhalter-Icon; das steht unter „Offene Punkte“.
+6. **Eine Woche Alltag** – danach die Standardwerte prüfen (offener Punkt). Beginn und Ende legt der Nutzer fest.
 
 - [x] Die Einstellungen öffnen sich im Vordergrund; alle Werte bleiben nach einem Neustart der App erhalten
 - [x] Ein geändertes Prüfintervall wirkt ohne Neustart der App
-- [ ] „Beim Anmelden starten“ funktioniert nach Ab- und Anmelden
+- [x] „Beim Anmelden starten“ funktioniert nach Ab- und Anmelden
 - [x] Bei einem Fehler entsteht die Logdatei unter `~/Library/Logs/TheTap/`; „Log öffnen“ zeigt sie
-- [ ] Die App hat ein eigenes Icon im Finder und in Mitteilungen
+- [ ] Die App hat ein eigenes Icon im Finder und in Mitteilungen (Finder und Anmeldeobjekte ✓, Mitteilungen offen)
 - [ ] Die App liegt in `/Applications` und läuft eine Woche ohne Auffälligkeiten
 
-### Phase 7a – Build und Release über GitHub
+### Phase 7a – Build und Release über GitHub ✓
 
-GitHub Actions baut die App bei jedem Versions-Tag `v…` als Release-Build für Apple Silicon und Intel und hängt sie als ZIP an einen GitHub-Release. Die App ist ad hoc signiert und nicht notarisiert; macOS blockiert sie deshalb beim ersten Start, bis der Nutzer sie in den Systemeinstellungen freigibt.
+Abgenommen am 27.10.2026, vorgezogen vor Phase 6, Schritt 6. GitHub Actions baut die App bei jedem Versions-Tag `v…` als Release-Build für Apple Silicon und Intel und hängt sie als ZIP an einen GitHub-Release. Die App ist ad hoc signiert und nicht notarisiert; macOS blockiert sie deshalb beim ersten Start, bis der Nutzer sie in den Systemeinstellungen freigibt.
 
-Die fertige Anleitung samt `release.yml` steht in `docs/RELEASE.md`. Schritte: Versionsnummer aus den Build-Einstellungen, Release-Workflow, Testrelease, Download auf dem Mac testen, README, Testrelease löschen; dazu der Ablauf für jeden späteren Release. Solange Phase 6 nicht abgehakt ist, gibt es nur Vorabversionen mit Bindestrich (`v0.1.0-test.1`); danach `v1.0.0`.
+`.github/workflows/release.yml` liegt im Repo (`8c5c96f`). Der Testrelease `v0.1.0-test.1` lief beim ersten Versuch grün und ist wieder gelöscht; der Tag wird nie wiederverwendet. Die Anleitung steht in `docs/RELEASE.md`. Solange Phase 6 nicht abgehakt ist, gibt es nur Vorabversionen mit Bindestrich (`v0.1.0-test.2`, `v1.0.0-beta.1`); danach `v1.0.0`.
+
+Beobachtet beim Test (27.10.2026): Die heruntergeladene App meldet beim ersten Start „„TheTap“ nicht geöffnet“; die Freigabe läuft über „Datenschutz & Sicherheit“ → „Dennoch öffnen“, dann im Dialog „„TheTap“ öffnen?“ erneut „Dennoch öffnen“ und die Eingabe von Admin-Name und Passwort. Danach startet sie ohne Warnung, ebenso mit `xattr -dr com.apple.quarantine`. Beim Ersetzen der lokal gebauten Kopie blieben Mitteilungs-Erlaubnis und der Eintrag in den Anmeldeobjekten erhalten. Die Texte stehen in der README.
 
 Abnahme:
 
-- [ ] Ein Tag `v…` startet den Lauf „Release“, und er wird grün
-- [ ] „Check build“ zeigt die Version aus dem Tag (ohne den Zusatz nach dem Bindestrich), beide Architekturen und `Signature=adhoc`
-- [ ] Am Release hängt `TheTap-<Version>.zip`; Tags mit Bindestrich erscheinen als „Pre-release“
-- [ ] Die heruntergeladene App startet nach der Freigabe in den Systemeinstellungen und funktioniert wie der lokale Build
-- [ ] Die README beschreibt Download, Installation und Freigabe mit den echten Texten aus macOS
+- [x] Ein Tag `v…` startet den Lauf „Release“, und er wird grün
+- [x] „Check build“ zeigt die Version aus dem Tag (ohne den Zusatz nach dem Bindestrich), beide Architekturen und `Signature=adhoc`
+- [x] Am Release hängt `TheTap-<Version>.zip`; Tags mit Bindestrich erscheinen als „Pre-release“
+- [x] Die heruntergeladene App startet nach der Freigabe in den Systemeinstellungen und funktioniert wie der lokale Build
+- [x] Die README beschreibt Download, Installation und Freigabe mit den echten Texten aus macOS (`83a151f`)
 
 ### Phase 7b – Erster Release nach Phase 6
 
@@ -431,12 +433,19 @@ Klärt, was beim Ersetzen einer heruntergeladenen Version durch eine neuere pass
 
 - [ ] Die neuere Version ersetzt die ältere; die README sagt, ob Freigabe, Mitteilungs-Erlaubnis und „Beim Anmelden starten“ erhalten bleiben oder neu eingeschaltet werden müssen
 
+### Phase 8 – Veröffentlichung über Homebrew Cask
+
+Die App soll über Homebrew Cask verfügbar sein. Die Veröffentlichung erfolgt erst nach Phase 7b, wenn die App stabil läuft und die Nutzererfahrung getestet wurde.
+
+Vor dem Start klären (nicht geprüft): Ob das offizielle Homebrew-Cask-Repository eine ad hoc signierte, nicht notarisierte App aufnimmt, steht in der Homebrew-Dokumentation nach. Ein eigener Tap wäre eine Alternative.
+
 ## Offene Punkte
 
 Diese Punkte sind noch nicht geklärt. Kläre sie in der genannten Phase und trage die Antwort unter „Feste Entscheidungen“ ein.
 
 - [x] **Signierung im Alltag:** Mitteilungen funktionieren mit Ad-hoc-Signierung zuverlässig, auch nach einem Neubau (geprüft in Phase 5 am 22.10.2026). Der Login-Start funktioniert ebenfalls: Die Kopie in `/Applications` startete nach Ab- und Anmelden von selbst (Phase 6, Schritt 4, geprüft am 26.10.2026). Ein kostenloses „Personal Team“ ist deshalb nicht nötig; bei Ad-hoc-Signierung bleibt es.
-- [ ] **Updates mit Ad-hoc-Signierung:** Bleiben Freigabe, Mitteilungs-Erlaubnis und Login-Start nach dem Ersetzen durch eine neue Version erhalten? Prüfen in Phase 7b.
+- [ ] **Icon in Mitteilungen:** Finder (Launchpad) und Anmeldeobjekte zeigen das neue App-Icon (geprüft am 27.10.2026). In Mitteilungen und in den Systemeinstellungen unter „Mitteilungen“ erscheint weiter das alte Platzhalter-Icon, auch nach Neustart von `NotificationCenter` und der Systemeinstellungen, nach dem Austragen der überzähligen Pfade bei Launch Services (Papierkorb, `build/…/Debug`, `build/…/Release`) und auch mit der vom GitHub-Runner gebauten, heruntergeladenen Kopie. Das App-Bundle selbst ist in Ordnung (`AppIcon.icns`, `Assets.car`, `CFBundleIconFile`, `CFBundleIconName`). Da dieselbe Bundle-ID auf demselben Mac läuft, ist der Download-Test nicht eindeutig; die Ursache ist ungeklärt. Nutzer bearbeitet das später (Ideen: Neustart des Macs, zweiter Benutzer oder anderer Mac, Verhalten des Icon-Caches).
+- [ ] **Updates mit Ad-hoc-Signierung:** Bleiben Freigabe, Mitteilungs-Erlaubnis und Login-Start nach dem Ersetzen durch eine neue Version erhalten? Teilweise beobachtet am 27.10.2026: Beim Ersetzen der lokalen Kopie durch den Download blieben Mitteilungs-Erlaubnis und Anmeldeobjekt erhalten. Offen ist, ob eine neuere heruntergeladene Version die Freigabe erneut verlangt. Prüfen in Phase 7b.
 - [ ] **Standardwerte:** Prüfintervall 6 Stunden und `--greedy` an sind Vorschläge; der Nutzer kann sie nach einer Woche Alltag (Phase 6) anpassen.
 
 ## Quellen

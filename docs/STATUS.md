@@ -1,21 +1,22 @@
 # TheTap – Status
 
-Stand: 26.10.2026
+Stand: 27.10.2026
 
 ## Aktuelle Phase
 
-Phase 6 – Einstellungen, Login-Start, Feinschliff: Schritt 1 (Logdatei), Schritt 2 (Einstellungsfenster), Schritt 3 (Installation) und Schritt 4 (Beim Anmelden starten) abgeschlossen und geprüft.
-Als Nächstes: Phase 6, Schritt 5 (App-Icon), noch nicht begonnen. Vor dem Start klärt die KI mit dem Nutzer, woher das Bild (1024 × 1024 Pixel) kommt.
+Phase 6 – Einstellungen, Login-Start, Feinschliff: Schritte 1 bis 5 abgeschlossen (Schritt 5, App-Icon, bis auf das Icon in Mitteilungen, siehe „Offene Probleme“). Als Nächstes Schritt 6, die Woche Alltag; danach Phase 7b.
+Phase 7a (Build und Release über GitHub) wurde am 27.10.2026 vorgezogen und ist abgenommen (Schritte 1 bis 6, alle fünf Kriterien erfüllt). Die Abnahme der Phase 6 steht noch aus (Icon in Mitteilungen, Woche Alltag).
 
 ## Umgebung
 
-- Repo: https://github.com/muunleit-projects/TheTap (Branch `main`), lokal unter `~/Programmieren/swift/TheTap`. Commits der letzten Chats: `3e0a17d` (PLAN.md und STATUS.md nach Phase 5), `5ebc449` (Tests für `logDetails`), `c70a664` (Logdatei, „Log öffnen“), `62c7d35` (UpgradeLauncher schreibt die Ursache ins Log), `9274101` (Plan und Status nach Phase 6, Schritt 1), `ff90382` (Einstellungsfenster), `629dec9` (Plan und Status nach Phase 6, Schritt 2), `5c5661c` (`scripts/install.sh`), `af00b9a` (Push vor Schritt 4), `7de6bf9` (Stand des letzten Push nach Schritt 4, CI grün). Phase 5 endete mit `a8c0114`, Phase 4 mit `64eaa17`.
+- Repo: https://github.com/muunleit-projects/TheTap (Branch `main`), lokal unter `~/Programmieren/swift/TheTap`. Commits der letzten Chats: `7de6bf9` (Beim Anmelden starten), `c9696c9` (Push nach Schritt 4), `ecfb5c1` (App-Icon: Asset-Katalog, `design/AppIcon-1024.png`, `scripts/make-icons.sh`, `project.yml`), danach „Take app version from build settings“ (Phase 7a, Schritt 1), `8c5c96f` („Add release workflow“) und `83a151f` (README zu Download und Installation). Phase 5 endete mit `a8c0114`, Phase 4 mit `64eaa17`.
 - Mac: macOS 26, Xcode 27.1, Swift 6.4, xcodegen 2.46.0, Homebrew 7.0.9, git 2.54.0. brew liegt unter `/opt/homebrew/bin/brew` (normale Datei, kein Symlink).
 - VS Code mit der Swift-Erweiterung (swiftlang) ist installiert.
-- CI: `.github/workflows/ci.yml` läuft auf dem Runner `macos-26` mit Xcode 26.6 und Swift 6.3.3, also älter als der Mac. Regeln dazu in PLAN.md unter „Feste Entscheidungen → Toolchain“. Die CI führt `swift test`, die Installation von XcodeGen und `scripts/build.sh` (ohne Parameter, also Debug) ohne `if:`-Bedingungen aus; nichts wird still übersprungen. Für `7de6bf9` ist sie grün.
-- Tests: 78 Tests in 7 Suites, lokal (auch mit `HOMEBREW_NO_AUTO_UPDATE=1`) und in der CI grün (Schritte 3 und 4 ändern das Package nicht).
+- CI: `.github/workflows/ci.yml` läuft auf dem Runner `macos-26` mit Xcode 26.6 und Swift 6.3.3, also älter als der Mac. Regeln dazu in PLAN.md unter „Feste Entscheidungen → Toolchain“. Die CI führt `swift test`, die Installation von XcodeGen und `scripts/build.sh` (ohne Parameter, also Debug) ohne `if:`-Bedingungen aus; nichts wird still übersprungen. Für `83a151f` ist sie grün.
+- Release: `.github/workflows/release.yml` startet bei Tags `v*`; er läuft auf demselben Runner, testet das Package, baut mit `ARCHS="arm64 x86_64"` und legt einen GitHub-Release mit `TheTap-<Version>.zip` an. Tags mit Bindestrich werden „Pre-release“. Bisher gibt es keinen Release; der Testrelease `v0.1.0-test.1` ist gelöscht (Tag lokal und auf GitHub weg), und der Tag wird nie wiederverwendet.
+- Tests: 78 Tests in 7 Suites, lokal (auch mit `HOMEBREW_NO_AUTO_UPDATE=1`) und in der CI grün (die Schritte seit Phase 6, Schritt 3 ändern das Package nicht).
 - `checkInterval` ist nicht gesetzt, es gilt der Standard von 6 Stunden (oder der Wert, den der Nutzer im Einstellungsfenster zuletzt gewählt hat).
-- Im Alltag läuft die Kopie unter `/Applications/TheTap.app` (installiert mit `scripts/install.sh`); „Beim Anmelden starten“ ist eingeschaltet.
+- Im Alltag läuft die Kopie unter `/Applications/TheTap.app` (installiert mit `scripts/install.sh`, nur `arm64`); „Beim Anmelden starten“ ist eingeschaltet. Ob die lokale oder die heruntergeladene Kopie läuft, zeigt `lipo -archs /Applications/TheTap.app/Contents/MacOS/TheTap`: lokal `arm64`, Download `x86_64 arm64`.
 - Claude kann Dateien aus dem GitHub-Repo nicht selbst lesen (GitHub sperrt den automatischen Zugriff auf die Unterordner). Dateien, um die es geht, lädt der Nutzer in den Chat hoch oder kopiert sie hinein.
 
 ## Erledigt
@@ -58,7 +59,18 @@ Als Nächstes: Phase 6, Schritt 5 (App-Icon), noch nicht begonnen. Vor dem Start
   - Der Status wird bei `onAppear` und bei jedem Aktivwerden der App neu gelesen.
   - Neue Log-Kategorie `settings` (Subsystem wie sonst): `Launch at login registered` / `unregistered`, `Login item status: …`, `Launch at login failed: …`.
   - Handprobe (Kopie in `/Applications`): Beim Einschalten zeigte macOS das Banner „Anmeldeobjekt hinzugefügt – „TheTap“ wird bei der Anmeldung automatisch geöffnet …“; unter Systemeinstellungen → Allgemein → Anmeldeobjekte & Erweiterungen steht „TheTap“ in der Liste „Bei der Anmeldung öffnen“; das Log zeigte `Login item status: SMAppServiceStatus(rawValue: 1)`. Nach Ab- und Anmelden lief TheTap von selbst (neue PID, genau eine Instanz unter `/Applications`), das Log zeigte `Trigger: startup`, `Starting check`, `Authorization granted` ohne neue Abfrage.
-- Dokumentation: `PLAN.md` und `docs/RELEASE.md` (Release-Anleitung samt `release.yml`) liegen im Repo. `.github/workflows/release.yml` selbst gibt es noch nicht (Phase 7a).
+- Phase 6, Schritt 5 – App-Icon (abgeschlossen am 27.10.2026, `ecfb5c1`, bis auf Mitteilungen):
+  - Master-Bild `design/AppIcon-1024.png` (1024 × 1024, RGBA, Transparenz in den Ecken; vom Nutzer bereitgestellt: Zapfhahn aus Metall mit goldenem Bogen, Apfel-Silhouette dahinter, Hopfen/Weizen/Tropfen am Ventil). Die erste Fassung war ein JPEG (1036 × 1036) mit eingebackenem Schachbrett und deshalb unbrauchbar.
+  - `scripts/make-icons.sh` prüft die Größe 1024 × 1024 und erzeugt mit `sips` die zehn Dateien in `App/Assets.xcassets/AppIcon.appiconset` (`icon_16x16.png` bis `icon_512x512@2x.png`, die 1024er ist eine Kopie des Masters); dazu `Contents.json` in Katalog und Icon-Set; `project.yml` setzt `ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon`.
+  - Geprüft: `sips -g hasAlpha` ergab `yes`; Build erfolgreich; Finder/Launchpad und Anmeldeobjekte zeigen das neue Icon (Größe wirkt neben anderen Icons stimmig, auf dunklem Grund fiel kein Saum auf). In Mitteilungen und unter Systemeinstellungen → Mitteilungen bleibt das alte Platzhalter-Icon (siehe „Offene Probleme“).
+- Phase 7a – Release über GitHub (abgenommen am 27.10.2026):
+  - Schritt 1: `project.yml` mit `CFBundleShortVersionString: '$(MARKETING_VERSION)'` und `CFBundleVersion: '$(CURRENT_PROJECT_VERSION)'`; `App/Info.plist` zeigt nun die Platzhalter; `plutil` gab `0.1.0` aus. Commit „Take app version from build settings“.
+  - Schritt 2: `.github/workflows/release.yml` wörtlich aus `RELEASE.md` (`8c5c96f`); die CI lief grün.
+  - Schritt 3: Tag `v0.1.0-test.1`; der Lauf „Release“ war beim ersten Versuch grün. „Check build“: `Version: 0.1.0`, `Architectures: x86_64 arm64`, `Identifier=io.github.muunleit-projects.thetap`, `Signature=adhoc`, `TeamIdentifier=not set`. Pre-release „TheTap 0.1.0-test.1“ mit `TheTap-0.1.0-test.1.zip` (3,53 MB).
+  - Schritt 4 (Download auf dem Mac): Ablauf der Freigabe mit allen Dialogtexten steht in der README. Danach funktionierten Menüleiste, „Jetzt prüfen“, „Alles aktualisieren“ (echtes Upgrade) und der Schalter „Beim Anmelden starten“; ein zweiter Start und die Gegenprobe mit `xattr -dr com.apple.quarantine` liefen ohne Warnung. Beim Ersetzen der lokal gebauten Kopie durch den Download kam keine neue Abfrage zur Mitteilungs-Erlaubnis, und der Eintrag in den Anmeldeobjekten blieb mit dem neuen Icon.
+  - Schritt 5: README mit „Herunterladen und installieren“, „Selbst bauen“, App-Icon, CI und Release (`83a151f`, CI grün, Anker-Links geprüft).
+  - Schritt 6: Testrelease und Tag gelöscht (`git ls-remote --tags origin` und `git tag` geben nichts aus). Die Release-Seite wurde vom Nutzer nicht ausdrücklich als leer bestätigt.
+- Dokumentation: `PLAN.md` und `docs/RELEASE.md` liegen im Repo. `release.yml` liegt jetzt im Repo; `RELEASE.md` enthält den YAML-Block noch (siehe „Offene Probleme“).
 
 ## Erkenntnisse
 
@@ -84,9 +96,9 @@ Als Nächstes: Phase 6, Schritt 5 (App-Icon), noch nicht begonnen. Vor dem Start
 - Das Log lässt sich über `NSWorkspace.shared.open` öffnen; macOS startet dafür die App „Konsole“ (Handprobe 22.10.2026).
 - Ein `Settings`-Fenster kommt in der `MenuBarExtra`-App ohne Dock-Icon mit `NSApp.activate()` in `onAppear` nach vorne (Handprobe 26.10.2026); das Panel schließt sich dabei nicht.
 - Die URL `x-apple.systempreferences:com.apple.Notifications-Settings.extension` öffnet unter macOS 26 die Seite „Mitteilungen“ der Systemeinstellungen (Handprobe 26.10.2026). Der Code fällt auf `x-apple.systempreferences:` zurück, falls `open` `false` liefert; dieser Rückfall ist nicht getestet.
-- Login-Start mit Ad-hoc-Signierung funktioniert für die Kopie in `/Applications` (Handprobe 26.10.2026, nach Ab- und Anmelden). Beobachtet: Bei aktivem Login-Item liefert `SMAppService.mainApp.status` im Log `rawValue: 1`; das passt zu `.enabled` (Banner und Eintrag in den Anmeldeobjekten bestätigen es). In den Systemeinstellungen zeigt TheTap derzeit ein graues Platzhalter-Icon (kein App-Icon vorhanden, siehe Schritt 5).
+- Login-Start mit Ad-hoc-Signierung funktioniert für die Kopie in `/Applications` (Handprobe 26.10.2026, nach Ab- und Anmelden). Beobachtet: Bei aktivem Login-Item liefert `SMAppService.mainApp.status` im Log `rawValue: 1`; das passt zu `.enabled` (Banner und Eintrag in den Anmeldeobjekten bestätigen es).
 - Mitteilungs-Erlaubnis beim ersten Start (Handprobe 22.10.): macOS zeigt ein Banner „Mitteilungen von „TheTap““ („Mitteilungen können Hinweise, Töne und Symbolkennzeichen sein.“, die Knöpfe waren im Screenshot nicht zu sehen). Ein Klick darauf öffnet die Systemeinstellungen (Mitteilungen → TheTap); dort schaltet der Nutzer „Mitteilungen erlauben“ (Schalter oben rechts) ein. Davor loggte die Prüfung `Not sending: notifications are not allowed (1 new)` und schrieb die Pakete trotzdem in `notifiedPackages` (so vorgesehen); die Erlaubnis-Anfrage lief rund 43 Sekunden und endete mit „Authorization request failed: Notifications are not allowed for this application“. Nach Angabe des Nutzers musste die App nach dem Erteilen einmal beendet und neu gestartet werden; danach `Authorization granted`. Warum der Neustart nötig war, ist ungeklärt (`notificationSettings()` wird bei jeder Mitteilung neu gelesen).
-- Mitteilungen funktionieren mit der Ad-hoc-Signierung des lokalen Builds, und die Erlaubnis bleibt nach einem Neubau mit `scripts/run.sh` erhalten (22.10.: `Authorization granted` ohne neue Abfrage). Das gilt nach Angabe des Nutzers auch für die Release-Kopie in `/Applications` nach `scripts/install.sh` (26.10.2026). Die Aktion „Alles aktualisieren“ erscheint als Knopf in der Mitteilung in der Mitteilungszentrale.
+- Mitteilungen funktionieren mit der Ad-hoc-Signierung des lokalen Builds, und die Erlaubnis bleibt nach einem Neubau mit `scripts/run.sh` erhalten (22.10.: `Authorization granted` ohne neue Abfrage). Das gilt nach Angabe des Nutzers auch für die Release-Kopie in `/Applications` nach `scripts/install.sh` (26.10.2026) und für den Wechsel auf die heruntergeladene Runner-Kopie (27.10.2026). Die Aktion „Alles aktualisieren“ erscheint als Knopf in der Mitteilung in der Mitteilungszentrale.
 - Nach einem Update von `hello` stand `notifiedPackages` bei 0 Einträgen; als `hello` wieder veraltet war, kam erneut genau eine Mitteilung.
 - SF Symbols auf dem Mac des Nutzers bestätigt: `mug`, `mug.fill`, `arrow.triangle.2.circlepath`, `pin`, `exclamationmark.triangle`.
 - `brew upgrade` kennt `--no-ask` (kurz `-y`) und `--greedy` (kurz `-g`) in der installierten Homebrew-Version.
@@ -94,31 +106,39 @@ Als Nächstes: Phase 6, Schritt 5 (App-Icon), noch nicht begonnen. Vor dem Start
 - Terminal schließt das Fenster, sobald die Shell sauber endet. Deshalb wartet das Upgrade-Skript am Ende mit `read -k 1` auf einen Tastendruck; der Recheck wird vorher ausgelöst.
 - `application(_:open:)` im `AppDelegate` empfängt URLs auch bei einer reinen `MenuBarExtra`-App ohne Fenster.
 - `scripts/build.sh` baut mit `-derivedDataPath build`; Debug liegt unter `build/Build/Products/Debug/TheTap.app`, Release (`install.sh`) unter `build/Build/Products/Release/TheTap.app`. `scripts/run.sh` beendet die laufende Instanz selbst (auch die Kopie aus `/Applications`) und startet den Debug-Build; danach startet der Nutzer die installierte Kopie mit `open /Applications/TheTap.app`. Wer die App von Hand mit `open` startet, muss sie vorher über „Beenden“ schließen.
-- `install.sh` baut mit `ONLY_ACTIVE_ARCH=YES`: Die installierte Kopie enthält nur `arm64`. Universal-Builds (Apple Silicon und Intel) entstehen erst in Phase 7a auf dem Runner.
+- `install.sh` baut mit `ONLY_ACTIVE_ARCH=YES`: Die installierte Kopie enthält nur `arm64`. Universal-Builds (Apple Silicon und Intel) entstehen nur auf dem Runner (`release.yml`); getestet wurde die heruntergeladene Kopie bisher nur auf Apple Silicon, Intel nicht.
 - Die `xcodebuild`-Meldung „Using the first of multiple matching destinations“ ist harmlos.
+- Icon-Dateien: Alles unter `App/` kopiert XcodeGen in die App, deshalb liegt das 1024er-Master unter `design/`. Der Pfad von `lsregister` existiert unter macOS 26: `/System/Library/Frameworks/CoreServices.framework/Frameworks/LaunchServices.framework/Support/lsregister`. Der Dump zeigte vor dem Aufräumen vier Pfade für `TheTap.app` (`/Applications`, Papierkorb, `build/…/Debug`, `build/…/Release`).
+- Freigabe einer heruntergeladenen Ad-hoc-App unter macOS 26 (Deutsch): „„TheTap“ nicht geöffnet“ (Knöpfe „In den Papierkorb legen“, „Fertig“) → Systemeinstellungen → Datenschutz & Sicherheit → „Sicherheit“ → „Dennoch öffnen“ → Dialog „„TheTap“ öffnen?“ mit erneutem „Dennoch öffnen“ → Admin-Name und Passwort, „OK“. Einstellung „Apps erlauben von“: „App Store & Bekannte Entwicklungsteams“. Mit `xattr -dr com.apple.quarantine /Applications/TheTap.app` entfällt die Warnung ebenfalls.
+- Der Release-Workflow lief beim ersten Versuch fehlerfrei; der Tag-Ablauf (taggen, pushen, Release prüfen, löschen mit `git push --delete origin <tag>` und `git tag -d <tag>`) funktioniert wie in `RELEASE.md` beschrieben.
 
 ## Offene Probleme
 
+- **Icon in Mitteilungen und in den Systemeinstellungen unter „Mitteilungen“:** weiter das alte Platzhalter-Icon. Versucht und ohne Wirkung: Neustart von `NotificationCenter`, Neustart der Systemeinstellungen, `lsregister -u` für Papierkorb und beide `build/…`-Pfade samt `-f` für `/Applications/TheTap.app`, und die vom Runner gebaute Kopie (gleiche Bundle-ID, gleicher Mac, also kein sauberer Test). Das Bundle ist in Ordnung (`AppIcon.icns`, `Assets.car`, `CFBundleIconFile`/`CFBundleIconName` = `AppIcon`). Ideen: Neustart des Macs, zweiter Benutzer oder anderer Mac, Icon-Cache. Der Nutzer bearbeitet das später.
+- `docs/RELEASE.md` ist veraltet: Der YAML-Block von `release.yml` steht noch drin (soll durch einen Verweis auf die Datei ersetzt werden), Schritt 4 kennt den Fall mit einer bereits installierten Kopie nicht, und die Freigabe hat einen Dialog mehr als dort vermutet. Außerdem fehlt in `PLAN.md` unter „Architektur und Projektstruktur“ der Eintrag für `design/` und `scripts/make-icons.sh`; der Satz „Ab Phase 7a, Schritt 1 außerdem die Versionsnummer“ in `project.yml`-Beschreibung gilt jetzt seit dem 27.10.2026.
+- `docs/PLAN.md`: Die geänderten Abschnitte aus dem letzten Chat (Phasenplan-Einleitung, Phase 6, Phase 7a, Phase 8, Offene Punkte) müssen noch eingesetzt und committet werden.
+- Die Release-Seite auf GitHub wurde nicht ausdrücklich als leer bestätigt.
 - Warnungen im Release-Build wurden nicht ausgewertet (gemeldet wurde nur `** BUILD SUCCEEDED **`). Bei Bedarf: `scripts/build.sh Release ONLY_ACTIVE_ARCH=YES 2>&1 | grep -i warning`.
-- Scroll-Grenze der Paketliste (ab 12 Zeilen) ist ungetestet, weil bisher zu wenige Pakete veraltet waren. Risiko gering; prüfen, sobald einmal viele Pakete veraltet sind (am 26.10. waren 17 Pakete neu veraltet; falls die Liste dabei gesehen wurde, hier nachtragen).
+- Scroll-Grenze der Paketliste (ab 12 Zeilen) ist ungetestet, weil bisher zu wenige Pakete veraltet waren. Risiko gering; am 26.10. waren 17 und am 27.10. 19 Pakete veraltet; falls die Liste dabei gesehen wurde, hier nachtragen.
 - `.vscode/settings.json` gibt es bewusst nicht: Die Einstellung `swift.searchSubfoldersForPackages` existiert in der installierten Erweiterung nicht (vorhanden ist `swift.ignoreSearchingForPackagesInSubfolders`). Noch zu prüfen: Findet die Erweiterung `Packages/BrewCheck` von selbst (keine roten Fehler in den Quelldateien, Tests in der Seitenleiste)? Falls nicht, passende Einstellung ergänzen.
-- Mitteilungs-Erlaubnis: Warum nach dem ersten Erteilen ein Neustart nötig war, ist ungeklärt; der genaue Wortlaut der Knöpfe im Banner ist nicht notiert. Beides wichtig für die README (Phase 7a); beim nächsten frischen Start einer neuen Kopie (Phase 7) beobachten.
+- Mitteilungs-Erlaubnis: Warum nach dem ersten Erteilen ein Neustart nötig war, ist ungeklärt; der genaue Wortlaut der Knöpfe im Banner ist nicht notiert. Beim nächsten frischen Start einer neuen Kopie beobachten (Phase 7b).
 - Der Fehlerpfad von `UpgradeLauncher` (Skript nicht schreibbar, Terminal nicht zu öffnen) ist nicht von Hand getestet. Bei `cannotOpenScript` steht nur der Pfad im Log, weil `NSWorkspace.open` keinen Grund liefert.
 - „Log öffnen“ tut nichts, wenn die Datei nicht existiert (z. B. weil das Schreiben ins Log selbst scheiterte); der Rückgabewert von `NSWorkspace.open` wird nicht ausgewertet.
 - Steht in `checkInterval` ein Wert außerhalb der Auswahl (z. B. 180 von Testläufen), zeigt das Auswahlfeld im Einstellungsfenster keinen Eintrag an; die App nutzt den Wert trotzdem. Nach Tests mit `defaults delete io.github.muunleit-projects.thetap checkInterval` zurücksetzen.
 - Eine geänderte Einstellung „Casks mit eigenem Updater“ wirkt erst ab der nächsten Prüfung; die angezeigte Liste bleibt bis dahin unverändert.
 - `install.sh` setzt Schreibrechte in `/Applications` voraus; beim Nutzer ging es ohne Fehler.
-- Der Fehlerpfad des Login-Start-Schalters (`register()` oder `unregister()` wirft) und der Zustand `.requiresApproval` sind nicht von Hand getestet; der Nutzer sah bei `register()` direkt `.enabled`. Der Fall „Schalter in den Systemeinstellungen ausgeschaltet, Fenster zeigt neuen Stand“ wurde nicht gemeldet.
-- Noch nicht umgesetzt: App-Icon (Phase 6, Schritt 5) und die Woche Alltag (Schritt 6).
-- Offen bleiben in PLAN.md unter „Offene Punkte“: Updates mit Ad-hoc-Signierung (Phase 7b) und Standardwerte (nach einer Woche Alltag). „Signierung im Alltag“ ist geklärt: Login-Start geht mit Ad-hoc-Signierung.
+- Der Fehlerpfad des Login-Start-Schalters (`register()` oder `unregister()` wirft) und der Zustand `.requiresApproval` sind nicht von Hand getestet.
+- Intel: Die Release-Kopie enthält `x86_64`, wurde aber nie auf einem Intel-Mac gestartet.
+- Offen bleiben in PLAN.md unter „Offene Punkte“: Icon in Mitteilungen, Updates mit Ad-hoc-Signierung (Phase 7b) und Standardwerte (nach einer Woche Alltag).
 
 ## Nächster Schritt
 
-Phase 6, Schritt 5 – App-Icon, nach PLAN.md:
+Es stehen drei unabhängige Dinge an; der Nutzer entscheidet die Reihenfolge:
 
-- Zuerst mit dem Nutzer klären, woher das Bild (1024 × 1024 Pixel) kommt (selbst gestaltet, aus einem Programm, erzeugt?).
-- Ein Skript erzeugt daraus mit `sips` die Größen für `App/Assets.xcassets/AppIcon.appiconset`; `project.yml` setzt `ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon`.
-- Vorher prüfen, ob macOS 26 ein solches Icon-Set noch richtig darstellt (nicht raten, nachprüfen). Apples Icon Composer wäre eine eigene App und damit eine Ausnahme von der VS-Code-Regel.
-- Danach prüfen: Icon im Finder, in Mitteilungen und in den Anmeldeobjekten (dort zeigt TheTap bisher ein graues Platzhalter-Icon).
+1. **Pflege der Dokumente** (kurz): die fünf PLAN-Abschnitte einsetzen und committen (siehe „Offene Probleme“); `RELEASE.md` aufräumen (YAML-Block durch Verweis auf `.github/workflows/release.yml` ersetzen, Schritt 4 mit den echten Dialogen und dem Fall einer bereits installierten Kopie); in `PLAN.md` die Projektstruktur um `design/` und `scripts/make-icons.sh` ergänzen. Dafür `PLAN.md` und `RELEASE.md` hochladen.
+2. **Phase 6, Schritt 6 – Eine Woche Alltag:** nichts zu bauen. Der Nutzer benutzt die Kopie in `/Applications`, notiert Auffälligkeiten und prüft danach die Standardwerte (Prüfintervall 6 Stunden, `--greedy` an). Danach Phase 6 abnehmen (offen sind außerdem das Icon in Mitteilungen und diese Woche).
+3. **Icon in Mitteilungen** (siehe „Offene Probleme“) bearbeitet der Nutzer später.
 
-Im neuen Chat hochladen: `PLAN.md`, `STATUS.md`, `project.yml`.
+Danach Phase 7b: `MARKETING_VERSION` auf `1.0.0` setzen, `v1.0.0-beta.1` veröffentlichen, die lokale Kopie durch den Download ersetzen, einige Tage nutzen, dann `v1.0.0` veröffentlichen und beobachten, ob Freigabe, Mitteilungs-Erlaubnis und „Beim Anmelden starten“ erhalten bleiben (Ablauf in `docs/RELEASE.md`). Phase 8 (Homebrew Cask) folgt erst nach 7b.
+
+Im neuen Chat hochladen: `PLAN.md`, `STATUS.md`; für Punkt 1 zusätzlich `RELEASE.md`.
