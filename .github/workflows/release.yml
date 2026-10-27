@@ -1,0 +1,67 @@
+name: Release
+
+# Runs when a version tag like v0.2.0 is pushed. Builds a universal
+# Release app, zips it and attaches the zip to a GitHub Release.
+# Tags with a hyphen (v0.2.0-test.1) become pre-releases.
+on:
+  push:
+    tags: ["v*"]
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    name: Build and publish (macOS 26)
+    runs-on: macos-26
+    env:
+      APP: build/Build/Products/Release/TheTap.app
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Read version from tag
+        run: |
+          VERSION="${GITHUB_REF_NAME#v}"
+          echo "VERSION=$VERSION" >> "$GITHUB_ENV"
+          echo "BUNDLE_VERSION=${VERSION%%-*}" >> "$GITHUB_ENV"
+
+      - name: Run package tests
+        working-directory: Packages/BrewCheck
+        run: swift test
+
+      - name: Install XcodeGen
+        run: brew install xcodegen
+
+      - name: Build app (Release, Apple Silicon + Intel)
+        run: |
+          xcodegen generate
+          xcodebuild \
+              -project TheTap.xcodeproj \
+              -scheme TheTap \
+              -configuration Release \
+              -destination "generic/platform=macOS" \
+              -derivedDataPath build \
+              ARCHS="arm64 x86_64" \
+              MARKETING_VERSION="$BUNDLE_VERSION" \
+              CURRENT_PROJECT_VERSION="$GITHUB_RUN_NUMBER" \
+              build
+
+      - name: Check build
+        run: |
+          echo "Version: $(/usr/libexec/PlistBuddy -c 'Print :CFBundleShortVersionString' "$APP/Contents/Info.plist")"
+          echo "Architectures: $(lipo -archs "$APP/Contents/MacOS/TheTap")"
+          codesign --verify --deep --strict "$APP"
+          codesign -dv "$APP" 2>&1 | grep -E "Identifier|Signature"
+
+      - name: Zip app
+        run: ditto -c -k --sequesterRsrc --keepParent "$APP" "TheTap-$VERSION.zip"
+
+      - name: Publish GitHub Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          args=(--title "TheTap $VERSION" --generate-notes --verify-tag)
+          if [[ "$VERSION" == *-* ]]; then
+              args+=(--prerelease)
+          fi
+          gh release create "$GITHUB_REF_NAME" "TheTap-$VERSION.zip" "${args[@]}"
