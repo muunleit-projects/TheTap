@@ -269,7 +269,7 @@ TheTap/
 │   └── Tests/BrewCheckTests/  # Tests samt JSON-Beispielen
 ├── design/                 # Master-Bild des App-Icons
 ├── scripts/                # build.sh, run.sh, install.sh, make-icons.sh
-├── docs/                   # Bauplan, Status, Release-Anleitung
+├── docs/                   # Bauplan, Status, Spezifikation, Release-Anleitung
 ├── project.yml             # XcodeGen-Beschreibung des App-Projekts
 └── .github/workflows/      # CI und Release
 ```
@@ -285,8 +285,9 @@ TheTap/
 ## Weitere Dokumentation
 
 - [`docs/PLAN.md`](docs/PLAN.md): Bauplan mit festen Entscheidungen, Architektur und Phasen
+- [`docs/SPEC.md`](docs/SPEC.md): technische Spezifikation und erprobtes Verhalten
 - [`docs/STATUS.md`](docs/STATUS.md): aktueller Stand der Entwicklung
-- [`docs/RELEASE.md`](docs/RELEASE.md): Ablauf für Releases über GitHub
+- [`docs/RELEASE.md`](docs/RELEASE.md): Ablauf für Releases über GitHub und den Homebrew-Tap
 
 ## Lizenz
 
