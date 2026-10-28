@@ -1,34 +1,41 @@
 # TheTap – Bauplan für die KI
 
-20.10.2026 · @M.
+20.10.2026, neu gegliedert am 27.10.2026 · @M.
 
 ## Zweck und Kontext
 
-TheTap ist eine Menüleisten-App für macOS, die regelmäßig prüft, welche Homebrew-Pakete veraltet sind, darüber per Mitteilung informiert und auf Klick alle Upgrades im Terminal startet. Sie ist in erster Linie für den Eigengebrauch gedacht; andere können die fertig gebaute App von GitHub herunterladen (Phase 7).
+TheTap ist eine Menüleisten-App für macOS, die regelmäßig prüft, welche Homebrew-Pakete veraltet sind, darüber per Mitteilung informiert und auf Klick alle Upgrades im Terminal startet. Sie ist in erster Linie für den Eigengebrauch gedacht; andere laden die fertig gebaute App von GitHub herunter (Phase 7a), später auch über einen eigenen Homebrew-Tap (Phase 8).
 
-Vorbild ist [muunleit-projects/show_updates](https://github.com/muunleit-projects/show_updates): eine Go-App mit Fyne-Fenster, das beim Login `brew update` und `brew outdated` ausführt. TheTap baut die Idee in Swift neu und ersetzt das Fenster durch ein Icon in der Menüleiste, das selbstständig prüft.
+Vorbild ist [muunleit-projects/show_updates](https://github.com/muunleit-projects/show_updates): eine Go-App mit Fyne-Fenster, die beim Login `brew update` und `brew outdated` ausführt. TheTap baut die Idee in Swift neu und ersetzt das Fenster durch ein Icon in der Menüleiste, das selbstständig prüft.
 
-Dieses Dokument ist die Arbeitsanweisung für die KI, die die App baut. Lies es zu Beginn jeder Sitzung ganz. Die Entscheidungen im Abschnitt „Feste Entscheidungen“ gelten; willst du davon abweichen, frag zuerst den Nutzer. Den aktuellen Stand der Arbeit hält `docs/STATUS.md` fest. Widerspricht eine hochgeladene Datei dem Plan, gilt die Datei; sprich den Widerspruch an und passe den Plan an.
+Dieses Dokument ist die Arbeitsanweisung für die KI, die die App baut. Lies es zu Beginn jeder Sitzung ganz. Die Entscheidungen im Abschnitt „Feste Entscheidungen“ gelten; willst du davon abweichen, frag zuerst den Nutzer. Widerspricht eine hochgeladene Datei dem Plan, gilt die Datei; sprich den Widerspruch an und passe den Plan an.
+
+| Datei            | Inhalt                                                      | Hochladen                                          |
+| ---------------- | ----------------------------------------------------------- | -------------------------------------------------- |
+| `docs/PLAN.md`   | Arbeitsregeln, feste Entscheidungen, Phasen, offene Punkte  | in jedem Chat                                      |
+| `docs/STATUS.md` | aktueller Stand, offene Probleme, nächster Schritt          | in jedem Chat                                      |
+| `docs/SPEC.md`   | technische Spezifikation und erprobtes Verhalten            | wenn Code, ein Skript oder `project.yml` sich ändert |
+| `docs/RELEASE.md`| Ablauf eines Releases, Homebrew-Tap                         | wenn ein Release oder der Tap dran ist             |
+| `README.md`      | Anleitung für Nutzer der App                                | wenn sich sichtbares Verhalten ändert              |
 
 ## Arbeitsregeln für die KI
 
 Der Nutzer hat keine Erfahrung mit Swift und Xcode, aber etwas mit Visual Studio Code, und verlässt sich auf dich. Arbeite deshalb in kleinen, überprüfbaren Schritten und erkläre alles, was er selbst tun muss.
 
-- **Arbeitsweise: Chat.** Du arbeitest im Chat (Claude, Free-Plan) und hast keinen Zugriff auf den Mac. Der Nutzer führt jeden Befehl selbst aus und kopiert dir das Ergebnis in den Chat. Verlass dich nicht darauf, das Repo lesen zu können; maßgeblich sind die Dateien, die der Nutzer hochlädt oder hineinkopiert.
-- **Sitzungsstart.** Jeder neue Chat beginnt im selben Projekt und mit dem Vorwissen daraus. Der Nutzer lädt zu Beginn `PLAN.md` und `STATUS.md` hoch, dazu die Dateien, die in `STATUS.md` unter „Nächster Schritt“ stehen. Arbeite nur mit Dateiinhalten, die dir in diesem Chat vorliegen; frag nach einer Datei, statt ihren Inhalt zu raten.
-- **Sitzungsende.** Am Ende jedes Chats, oder wenn der Nutzer es verlangt oder wenn ein Schritt erledigt wurde, lieferst du eine aktualisierte `docs/STATUS.md`: aktuelle Phase und aktueller Schritt, letzter Commit, erledigte Schritte, Erkenntnisse, offene Probleme, nächster Schritt und die Liste der Dateien für den nächsten Chat. Erkenntnisse, die dauerhaft gelten (Toolchain, Verhalten von brew, neue Entscheidungen), trägst du zusätzlich in `PLAN.md` ein.
-- **Ein Schritt pro Antwort.** Jede Antwort enthält einen überschaubaren Schritt: welche Dateien, ihr vollständiger Inhalt, die Befehle zum Prüfen und die erwartete Ausgabe. Danach wartest du auf die Rückmeldung.
-- **Immer ganze Dateien.** Gib jede neue oder geänderte Datei vollständig aus, mit ihrem Pfad als Überschrift, nie als Ausschnitt oder Diff. Der Nutzer ersetzt den Dateiinhalt komplett. Halte Dateien klein, lieber mehrere kurze als eine lange. Ausnahmen sind `PLAN.md` und `RELEASE.md`: Dort gibst du nur die geänderten Abschnitte aus, jeden vollständig von seiner Überschrift (in `RELEASE.md`: vom fett gesetzten Schritt-Titel) bis zur nächsten, und sagst, welchen Abschnitt er ersetzt.
-- **Erst grün, dann weiter.** Nach jeder Änderung lässt du den Nutzer `swift build` und `swift test` im Package ausführen, ab Phase 3 zusätzlich `scripts/build.sh`. Bei Fehlern zuerst reparieren.
-- **Ausgaben kurz halten.** Bei langen Ausgaben bittest du nur um die Fehlermeldungen oder die letzten Zeilen und nennst den passenden Befehl, z. B. `swift test 2>&1 | tail -40`.
-- **Sparsam mit dem Kontingent.** Der Free-Plan hat ein Nutzungslimit, das sich alle fünf Stunden erneuert. Keine langen Erklärungen ohne Anlass und keinen Code doppelt ausgeben.
+- **Arbeitsweise: Chat.** Du arbeitest im Chat (Claude, Free-Plan; so arbeitet der Nutzer an dem Mac, an dem die App entsteht) und hast keinen Zugriff auf den Mac. Der Nutzer führt jeden Befehl selbst aus und kopiert dir das Ergebnis in den Chat. Maßgeblich sind die Dateien, die in diesem Chat vorliegen; frag nach einer Datei, statt ihren Inhalt zu raten.
+- **Sitzungsstart.** Jeder neue Chat beginnt im selben Projekt. Der Nutzer lädt `PLAN.md`, `STATUS.md` und die Dateien hoch, die `STATUS.md` unter „Nächster Schritt“ nennt. Alternativ lädt er das ganze Repo als ZIP hoch (auf GitHub „Code“ → „Download ZIP“; enthält den Stand des letzten Pushs).
+- **Sitzungsende.** Am Ende jedes Chats, wenn ein Schritt erledigt ist oder der Nutzer es verlangt, lieferst du eine aktualisierte `STATUS.md`: aktuelle Phase und Schritt, letzter Commit, zuletzt erledigte Schritte, offene Probleme, nächster Schritt und die Dateien für den nächsten Chat.
+- **Jede Information an einer Stelle.** Neue Entscheidungen kommen nach `PLAN.md` unter „Feste Entscheidungen“, dauerhafte Erkenntnisse (Verhalten von macOS, brew, Swift, Toolchain) nach `SPEC.md` unter „Erprobtes Verhalten“, alles Vorläufige nach `STATUS.md`. Nichts wird zusätzlich an einer zweiten Stelle festgehalten. Der Fortschritt innerhalb einer Phase steht nur in `STATUS.md`; ist eine Phase abgenommen, trägst du sie in `PLAN.md` unter „Abgeschlossene Phasen“ ein und kürzt `STATUS.md`. Einzelheiten zu erledigten Schritten stehen in den Commits.
+- **Ein Schritt pro Antwort.** Jede Antwort enthält einen überschaubaren Schritt: welche Dateien, ihr Inhalt, die Befehle zum Prüfen mit der erwarteten Ausgabe und was der Nutzer zurückmelden soll. Danach wartest du auf die Rückmeldung.
+- **Immer ganze Dateien.** Gib jede neue oder geänderte Datei vollständig aus, mit ihrem Pfad als Überschrift, nie als Ausschnitt oder Diff. Der Nutzer ersetzt den Dateiinhalt komplett. Halte Dateien klein, lieber mehrere kurze als eine lange. Ausnahmen sind `PLAN.md`, `SPEC.md` und `README.md`: Dort gibst du nur die geänderten Abschnitte aus, jeden vollständig von seiner Überschrift bis zur nächsten, und sagst, welchen Abschnitt er ersetzt. Kannst du Dateien zum Herunterladen liefern, lieferst du auch diese drei vollständig.
+- **Erst grün, dann weiter.** Nach jeder Code-Änderung lässt du den Nutzer `swift build` und `swift test` im Package und `scripts/build.sh` ausführen. Bei Fehlern zuerst reparieren. Reine Änderungen an Dokumenten brauchen das nicht.
+- **Sparsam mit Ausgaben und Kontingent.** Der Free-Plan hat ein Nutzungslimit, das sich alle fünf Stunden erneuert. Keine langen Erklärungen ohne Anlass und keinen Code doppelt ausgeben. Bei langen Ausgaben bittest du nur um die Fehlermeldungen oder die letzten Zeilen und nennst den passenden Befehl, z. B. `swift test 2>&1 | tail -40`.
 - **Editor ist VS Code.** Der Nutzer arbeitet in Visual Studio Code mit der offiziellen Swift-Erweiterung, nicht in der Xcode-Oberfläche. Alles muss sich per Terminal-Befehl oder VS-Code-Task bauen, testen und starten lassen. Setzt ein Schritt doch Xcode voraus, kennzeichne ihn ausdrücklich als Ausnahme.
-- **Klickanleitungen für den Nutzer.** Alles, was er in VS Code, im Finder oder in den Systemeinstellungen tun muss, beschreibst du als nummerierte Schrittfolge mit den genauen Menü- und Knopfnamen.
-- **Befehle mit erwarteter Ausgabe.** Zu jedem Befehl sagst du, was der Nutzer sehen sollte und was er dir zurückmelden soll.
-- **Fachbegriffe erklären.** Beim ersten Auftreten eines Swift-Begriffs ein Satz Erklärung.
-- **Nichts erfinden.** Bei Unsicherheit über eine Apple-API, ein SF-Symbol oder ein brew-Flag sagst du das offen und lässt den Nutzer nachprüfen (z. B. mit `brew <befehl> --help`), statt zu raten.
+- **Klickanleitungen für den Nutzer.** Alles, was er in VS Code, im Finder, auf GitHub oder in den Systemeinstellungen tun muss, beschreibst du als nummerierte Schrittfolge mit den genauen Menü- und Knopfnamen.
+- **Fachbegriffe erklären.** Beim ersten Auftreten eines Swift- oder Homebrew-Begriffs ein Satz Erklärung.
+- **Nichts erfinden.** Bei Unsicherheit über eine Apple-API, ein SF-Symbol, ein brew-Flag oder eine Cask-Angabe sagst du das offen und lässt den Nutzer nachprüfen (z. B. mit `brew <befehl> --help` oder `brew audit`), statt zu raten.
 - **Phasen-Abschluss.** Am Ende jeder Phase gehst du die Abnahmekriterien mit dem Nutzer durch; abgehakt wird erst, wenn er sie geprüft hat.
-- **Sprache.** Code, Bezeichnet, Kommentare und Commit-Messages auf Englisch; alle Texte, die der Nutzer in der App oder CLI sieht, auf Deutsch.
+- **Sprache.** Code, Bezeichner, Kommentare und Commit-Messages auf Englisch; alle Texte, die der Nutzer in der App oder CLI sieht, auf Deutsch.
 - **Keine Fremdbibliotheken.** Nur Apple-Frameworks und die Swift-Standardbibliothek. XcodeGen ist ein Werkzeug, keine Abhängigkeit der App.
 - **Git.** Nach jedem abgeschlossenen Schritt nennst du die Befehle zum Committen und Pushen samt Commit-Nachricht. Das generierte `TheTap.xcodeproj` und der Ordner `build/` werden nicht eingecheckt. `App/Info.plist` erzeugt XcodeGen ebenfalls; sie wird aber eingecheckt und nur über `project.yml` geändert. Die GitHub-Actions-Prüfung ist eine zusätzliche Kontrolle; ihr Ergebnis meldet der Nutzer, wenn sie rot wird.
 
@@ -48,15 +55,16 @@ Diese Punkte sind mit dem Nutzer abgestimmt und werden nicht ohne Rücksprache g
 - **Autostart:** `SMAppService.mainApp`, Schalter in den Einstellungen. _Grund:_ Offizieller Weg seit macOS 13.
 - **Sandbox:** App Sandbox ausgeschaltet. _Grund:_ Eine Sandbox-App darf `/opt/homebrew/bin/brew` nicht starten.
 - **CLI:** Bleibt als Entwicklerwerkzeug zum Testen der Kernlogik. _Grund:_ Im Alltag nutzt der Nutzer nur die Menüleisten-App.
-- **Signierung:** Ad hoc (`CODE_SIGN_IDENTITY: "-"` in `project.yml`), lokal und in GitHub Actions. **Kein Apple Developer Program** (entschieden am 20.10.2026), also keine Developer-ID-Signatur und keine Notarisierung. _Grund:_ Kostenlos; Mitteilungs-Erlaubnis und Login-Start hängen an der Bundle-ID. Folge: Wer die App herunterlädt, muss sie beim ersten Start in den Systemeinstellungen freigeben.
+- **Signierung:** Ad hoc (`CODE_SIGN_IDENTITY: "-"` in `project.yml`), lokal und in GitHub Actions. **Kein Apple Developer Program** (entschieden am 20.10.2026), also keine Developer-ID-Signatur und keine Notarisierung. Geprüft: Mitteilungen und Login-Start funktionieren damit, auch nach einem Neubau (22. und 26.10.2026); ein kostenloses „Personal Team“ ist nicht nötig. _Grund:_ Kostenlos; Mitteilungs-Erlaubnis und Login-Start hängen an der Bundle-ID. Folge: Wer die App herunterlädt, muss sie beim ersten Start in den Systemeinstellungen freigeben.
 - **Verteilung:** GitHub Releases: Ein Versions-Tag `vX.Y.Z` startet `.github/workflows/release.yml`; der Workflow baut eine Release-App für Apple Silicon und Intel und hängt sie als ZIP an den Release. _Grund:_ Kostenlos, ohne eigenen Server; gebaut wird auf einem sauberen GitHub-Runner, nicht auf dem Mac des Nutzers.
+- **Homebrew:** eigener Tap `muunleit-projects/homebrew-tap` mit dem Cask `thetap` (entschieden am 27.10.2026). Ab Phase 7b kommt die Alltagskopie in `/Applications` nur noch über brew; `scripts/install.sh` würde die von brew verwaltete Kopie überschreiben, ohne dass brew es merkt. Zum Entwickeln bleibt `scripts/run.sh`. _Grund:_ Das offizielle `homebrew/cask` nimmt keine nicht notarisierten Apps auf (siehe Phase 8); ein eigener Tap ist kostenlos, und Updates laufen über TheTap selbst („Alles aktualisieren“).
 - **Versionsnummer:** Der Tag gibt die Version vor (`v0.2.0` → `0.2.0`); `MARKETING_VERSION` in `project.yml` wird vor dem Taggen auf dieselbe Nummer gesetzt. _Grund:_ `Info.plist` liest Version und Build-Nummer aus den Build-Einstellungen.
 - **Repo:** [muunleit-projects/TheTap](https://github.com/muunleit-projects/TheTap), Branch `main`, auf den Mac geklont nach `~/Programmieren/swift/TheTap`.
 - **CI:** GitHub Actions auf dem Runner `macos-26`: `swift test` und App-Build bei jedem Push auf `main` und bei Pull Requests, ohne `if:`-Bedingungen. _Grund:_ Zweite, unabhängige Prüfung neben den Testläufen des Nutzers.
 
 ## Architektur und Projektstruktur
 
-Alle Logik, die ohne Oberfläche auskommt, liegt in der Bibliothek BrewCheck; die App ist nur eine dünne Hülle darum. So lässt sich der Kern mit `swift test` und der CLI prüfen, ohne Xcode zu öffnen.
+Alle Logik, die ohne Oberfläche auskommt, liegt in der Bibliothek BrewCheck; die App ist nur eine dünne Hülle darum. So lässt sich der Kern mit `swift test` und der CLI prüfen, ohne Xcode zu öffnen. Die genaue Spezifikation steht in `SPEC.md`.
 
 ```text
 TheTap.app (SwiftUI) ─┐
@@ -68,12 +76,12 @@ TheTap.app ──.command-Skript──► Terminal: brew upgrade ──thetap://
 
 - **BrewCheck** (Swift Package, Bibliothek): brew finden, Befehle mit Timeout ausführen, JSON parsen, den Text des Upgrade-Skripts erzeugen, deutsche Fehlertexte, dazu reine Entscheidungsregeln (`Policies`).
 - **brewcheck-cli** (Swift Package, ausführbar): ruft BrewCheck auf und gibt die Liste im Terminal aus. Nur zum Testen.
-- **TheTap** (App-Target): Menüleiste, Zustand, Netzwerkstatus, Zeitplan, Mitteilungen, Upgrade-Start, Einstellungen.
+- **TheTap** (App-Target): Menüleiste, Zustand, Netzwerkstatus, Zeitplan, Mitteilungen, Upgrade-Start, Einstellungen, Logdatei.
 
 ```text
 TheTap/                          # Repo-Wurzel
 ├── project.yml                  # XcodeGen-Beschreibung des App-Projekts
-├── README.md
+├── README.md                    # Anleitung für Nutzer
 ├── LICENSE                      # MIT
 ├── Packages/BrewCheck/
 │   ├── Package.swift
@@ -83,375 +91,119 @@ TheTap/                          # Repo-Wurzel
 │   └── Tests/BrewCheckTests/
 │       └── Fixtures/            # JSON-Beispiele, real.json aus echtem brew
 ├── App/
-│   ├── TheTapApp.swift          # @main, MenuBarExtra (Settings ab Phase 6)
-│   ├── AppDelegate.swift        # hält AppState, URL-Schema, ab Phase 5 Mitteilungs-Delegate
+│   ├── TheTapApp.swift          # @main, MenuBarExtra, Settings-Szene
+│   ├── AppDelegate.swift        # hält AppState und Scheduler, URL-Schema, Mitteilungs-Delegate
 │   ├── AppState.swift           # @Observable, @MainActor
 │   ├── NetworkMonitor.swift     # NWPathMonitor
-│   ├── UpgradeLauncher.swift
-│   ├── Scheduler.swift          # ab Phase 5
-│   ├── Notifier.swift           # ab Phase 5
-│   ├── Views/                   # MenuBarLabel, PanelView, PackageListView
+│   ├── Scheduler.swift          # Start, Wecker, Aufwachen
+│   ├── Notifier.swift           # Mitteilungen
+│   ├── UpgradeLauncher.swift    # .command-Skript ins Terminal
+│   ├── LogFile.swift            # ~/Library/Logs/TheTap/thetap.log
+│   ├── Views/                   # MenuBarLabel, PanelView, PackageListView, SettingsView
 │   ├── Info.plist               # von XcodeGen erzeugt, eingecheckt
-│   ├── LogFile.swift            # ab Phase 6: ~/Library/Logs/TheTap/TheTap.log
-│   └── Assets.xcassets          # ab Phase 6 (App-Icon)
+│   └── Assets.xcassets/         # App-Icon, erzeugt aus design/
+├── design/AppIcon-1024.png      # Master des App-Icons
 ├── scripts/
 │   ├── build.sh                 # xcodegen generate + xcodebuild (Debug, oder Release als 1. Parameter)
-│   ├── run.sh                   # bauen, laufende App beenden, neu starten
-│   └── install.sh               # ab Phase 6: Release-Build nach /Applications
-├── .vscode/
-│   ├── tasks.json               # Tasks: Test, CLI, App bauen, App starten
-│   └── extensions.json          # empfiehlt die Swift-Erweiterung
+│   ├── run.sh                   # Debug bauen, laufende App beenden, neu starten
+│   ├── install.sh               # Release-Build nach /Applications
+│   └── make-icons.sh            # Icon-Größen aus design/ erzeugen
+├── .vscode/                     # tasks.json (Test, CLI, App bauen, App starten), extensions.json
 ├── .github/workflows/
-│   ├── ci.yml                   # swift test + App-Build auf macOS
-│   └── release.yml              # ab Phase 7a: bei Tag vX.Y.Z Release-Build, ZIP, GitHub-Release
-├── docs/PLAN.md                 # dieses Dokument
-├── docs/RELEASE.md              # Anleitung für Phase 7a und jeden Release
-├── docs/STATUS.md               # Fortschritt, von der KI am Ende jedes Chats aktualisiert
+│   ├── ci.yml                   # swift test + App-Build bei Push und Pull Request
+│   └── release.yml              # bei Tag v…: Release-Build, ZIP, GitHub-Release
+├── docs/                        # PLAN.md, STATUS.md, SPEC.md, RELEASE.md
 └── .gitignore                   # u. a. TheTap.xcodeproj/, build/, .build/
 ```
 
 **Achtung Ordnernamen:** Der CLI-Ordner heißt `BrewCheckCLI`, nicht `brewcheck`. Das macOS-Dateisystem unterscheidet standardmäßig nicht zwischen Groß- und Kleinschreibung; `BrewCheck` und `brewcheck` wären derselbe Ordner.
 
-**XcodeGen statt Xcode-Oberfläche:** Eine Mac-App braucht ein Xcode-Projekt, aber niemand muss es in Xcode öffnen. Mit [XcodeGen](https://github.com/yonaskolb/XcodeGen) beschreibt `project.yml` das Projekt als lesbaren Text; `xcodegen generate` erzeugt daraus `TheTap.xcodeproj`, und `xcodebuild` baut die App. Du änderst nur `project.yml`.
-
-`project.yml` legt fest: Deployment Target macOS 26, Swift 6, die Bundle-ID, `LSUIElement = YES`, das URL-Schema `thetap`, kein App-Sandbox-Entitlement, Ad-hoc-Signierung (`CODE_SIGN_STYLE: Manual`, `CODE_SIGN_IDENTITY: "-"`) und die Abhängigkeit auf das lokale Package `Packages/BrewCheck`. Ab Phase 7a, Schritt 1 außerdem die Versionsnummer: `CFBundleShortVersionString: "$(MARKETING_VERSION)"` und `CFBundleVersion: "$(CURRENT_PROJECT_VERSION)"` unter `info → properties`. Ohne diese beiden Einträge schreibt XcodeGen fest `1.0` und `1` in `App/Info.plist`.
-
-**Alltag in VS Code:** Der Nutzer öffnet den Repo-Ordner in VS Code und startet über „Terminal → Run Task …“ die Tasks aus `.vscode/tasks.json`: „Test“ (`swift test` im Package), „CLI“ (`swift run brewcheck-cli --no-update`), „App bauen“ (`scripts/build.sh`) und „App starten“ (`scripts/run.sh`). Eine `.vscode/settings.json` gibt es bewusst nicht: Die früher geplante Einstellung `swift.searchSubfoldersForPackages` existiert in der Erweiterung nicht (vorhanden ist `swift.ignoreSearchingForPackagesInSubfolders`). Ob die Erweiterung `Packages/BrewCheck` von selbst findet, steht in `STATUS.md` unter „Offene Probleme“.
-
-## Kernbibliothek BrewCheck
-
-BrewCheck führt `brew update` und `brew outdated --json=v2 --greedy` aus und liefert eine sortierte Liste veralteter Pakete oder einen klar benannten Fehler. Die Bibliothek importiert weder SwiftUI noch AppKit. Sie ist seit Phase 4 fertig bis auf die neuen Regeln für Phase 5; Code und Tests sind die genaue Quelle, dieser Abschnitt hält die Regeln fest.
-
-**Datenmodell** (alle Typen `Sendable`):
-
-```swift
-public enum PackageKind: String, Sendable, Codable { case formula, cask }
-
-public struct OutdatedPackage: Sendable, Hashable, Codable {
-    public let name: String
-    public let kind: PackageKind
-    public let installedVersions: [String]
-    public let currentVersion: String
-    public let pinned: Bool
-}
-
-public struct PackageKey: Sendable, Hashable, Codable {
-    public let name: String
-    public let kind: PackageKind
-    public let version: String
-}
-
-public enum BrewCheckError: Error, Sendable {
-    case brewNotFound(searched: [String])
-    case commandFailed(command: [String], exitCode: Int32, output: String)
-    case timedOut(command: [String], after: Duration)
-    case invalidJSON(String)
-    case cancelled
-}
-```
-
-`PackageKey` bedeutet „dieses Paket in dieser Version“; `OutdatedPackage.key` liefert ihn mit `version = currentVersion`. Eine neue Version desselben Pakets ist ein neuer Schlüssel, Formula und Cask mit gleichem Namen sind verschieden.
-
-**`BrewChecker`** ist ein `actor`, damit nie zwei Prüfungen gleichzeitig laufen:
-
-```swift
-public actor BrewChecker {
-    public init(runner: any CommandRunner = ProcessRunner(),
-                locator: BrewLocator = BrewLocator(),
-                baseEnvironment: [String: String] = ProcessInfo.processInfo.environment,
-                updateTimeout: Duration = .seconds(600),
-                outdatedTimeout: Duration = .seconds(120))
-    public func outdated(runUpdate: Bool = true, greedy: Bool = true) async throws -> [OutdatedPackage]
-}
-```
-
-Ablauf: brew finden; wenn `runUpdate`, `brew update`; dann `brew outdated --json=v2`, plus `--greedy` wenn `greedy`. Jeder Exit-Code ungleich 0 ergibt `commandFailed` mit den letzten 200 Zeilen aus stdout und stderr, ohne zu parsen (geprüft: brew liefert 0, auch wenn Pakete veraltet sind). Geparst wird nur stdout; stderr enthält Warnungen.
-
-Die übrigen Bausteine:
-
-- **`BrewLocator`:** sucht brew erst in jedem Verzeichnis aus `PATH`, dann unter `/opt/homebrew/bin/brew` und `/usr/local/bin/brew`; ein Treffer muss ausführbar sein. `PATH` und Dateiprüfung sind injizierbar. Nichts gefunden → `brewNotFound` mit allen geprüften Pfaden.
-- **`CommandRunner`:** Protokoll mit `run(_:arguments:environment:timeout:) async throws -> CommandResult` (`exitCode`, `stdout`, `stderr` als `Data`), damit Tests einen `FakeRunner` einsetzen können.
-- **`ProcessRunner`** (Hilfstypen in `ProcessSupport.swift`): liest stdout und stderr parallel während des Laufs, sonst hängt der Prozess bei vollem Pipe-Puffer. Bei Zeitüberschreitung SIGTERM, nach 5 Sekunden SIGKILL, dann `timedOut`; bei Abbruch der Swift-`Task` dasselbe, dann `cancelled`. Wartet danach höchstens 5 Sekunden auf das Schließen der Pipes, weil Kindprozesse von brew sie offen halten können. Blockiert nie den Main Thread.
-- **Umgebung für brew:** Ausgangspunkt ist `baseEnvironment`; Tests übergeben eine feste Umgebung, weil z. B. die GitHub-Runner `HOMEBREW_NO_AUTO_UPDATE=1` selbst setzen. `PATH` wird ersetzt durch das Verzeichnis von brew plus `/usr/bin:/bin:/usr/sbin:/sbin`, weil eine aus dem Finder oder beim Login gestartete App einen sehr kurzen `PATH` erbt. Immer `HOMEBREW_NO_ENV_HINTS=1`; nur bei `outdated` zusätzlich `HOMEBREW_NO_AUTO_UPDATE=1`, sonst aktualisiert `outdated` die API-Daten selbst.
-- **`OutdatedParser`:** Format wie in `Fixtures/real.json`. Tolerant: fehlendes `formulae` oder `casks` = leere Liste, fehlendes `pinned` = `false`, unbekannte Felder ignorieren, `installed_versions` auch als einzelner String. Leere oder ungültige Ausgabe → `invalidJSON` mit den ersten 500 Zeichen. Sortierung: erst Formulae, dann Casks, jeweils nach Name (`localizedStandardCompare`).
-- **`BrewCheckError.userMessage`** (`BrewCheckError+Message.swift`): eine deutsche Zeile pro Fall, gemeinsam für CLI und App (Texte unter „Fehlerbehandlung und Logging“).
-- **`UpgradeScript.content(brewPath:greedy:)`:** Text des `.command`-Skripts (siehe „Upgrade“). Der brew-Pfad steht in einfachen Anführungszeichen, ein `'` darin wird zu `'\''`.
-
-**Reine Regeln (`Policies`).** Alles, was die App entscheidet, aber ohne Oberfläche berechenbar ist, liegt hier als reine Funktion ohne Seiteneffekte:
-
-- `isCheckDue(lastSuccess:interval:now:) -> Bool` – fällig, wenn es noch keine erfolgreiche Prüfung gab, das Intervall abgelaufen ist oder `lastSuccess` in der Zukunft liegt (Uhr verstellt).
-- `newlyOutdated(current:alreadyNotified:) -> [OutdatedPackage]` – ein Paket ist neu, wenn sein `PackageKey` noch nicht gemeldet wurde. Angepinnte Pakete werden nie gemeldet.
-- `pruneNotified(_:current:) -> Set<PackageKey>` – entfernt gemeldete Einträge für Pakete, die nicht mehr in dieser Version veraltet sind.
-- `badgeCount(_:) -> Int` – zählt nur nicht angepinnte Pakete, weil `brew upgrade` angepinnte überspringt.
-- Neu in Phase 5, Schritt 2:
-  - `failuresBeforeError = 3` und `showsFailure(consecutiveFailures:manual:) -> Bool` – eine manuelle Prüfung zeigt einen Fehler sofort, eine automatische erst ab 3 Fehlschlägen in Folge.
-  - `notificationText(newPackages:badgeCount:) -> NotificationText` (Struktur mit `title` und `body`). Titel: „1 Homebrew-Update verfügbar“ bzw. „3 Homebrew-Updates verfügbar“ (Zahl aus `badgeCount`). Text: die Namen der neuen Pakete, bis drei als „git, node und wget“, mehr als „git, node, wget und 1 weiteres“ bzw. „… und 2 weitere“.
-
-## CLI
-
-`brewcheck-cli` (fertig seit Phase 2) ruft `BrewChecker` auf und dient nur zum Testen. Aufruf im Ordner `Packages/BrewCheck`: `swift run brewcheck-cli [--no-update] [--no-greedy] [--json]`; die Optionen werden ohne Fremdbibliothek aus `CommandLine.arguments` gelesen. Ausgabe als Tabelle (Formulae, dann Casks, je Zeile `name  installiert → neu`, angepinnte mit „(angepinnt)“, ohne Pakete „Alles aktuell.“) oder mit `--json` als JSON. Fehler gehen auf stderr: `userMessage` plus Befehl, Exit-Code und die letzten 20 Zeilen. Exit-Code 0 bei erfolgreicher Prüfung, 1 bei Fehler, 2 bei falschen Optionen.
-
-## Menüleisten-App
-
-Die App zeigt ein Icon in der Menüleiste, das den Zustand auf einen Blick verrät, und öffnet beim Klick ein Panel mit der Paketliste. Sie prüft selbstständig, meldet neue Updates per Mitteilung und startet Upgrades im Terminal.
-
-### Zustand (`AppState`)
-
-`AppState` ist `@Observable` und `@MainActor` und die einzige Quelle der Wahrheit für die Oberfläche. Der `AppDelegate` besitzt ihn; `TheTapApp` liest ihn über `@NSApplicationDelegateAdaptor`. Er hält die Phase, die letzte Paketliste, den Zeitpunkt der letzten erfolgreichen Prüfung, den letzten Fehlertext, die Zahl der Fehlversuche in Folge, den Netzwerkstatus und ob gerade ein Upgrade läuft.
-
-| Phase              | Icon in der Menüleiste                           | Kopfzeile im Panel                                |
-| ------------------ | ------------------------------------------------ | ------------------------------------------------- |
-| Noch nicht geprüft | `mug`                                            | „Noch nicht geprüft“                              |
-| Prüft              | `arrow.triangle.2.circlepath`                    | „Prüfe auf Updates …“                             |
-| Alles aktuell      | `mug`                                            | „Alles aktuell“                                   |
-| Updates verfügbar  | `mug.fill` und die Zahl aus `badgeCount` daneben | „1 Update verfügbar“ / „3 Updates verfügbar“      |
-| Offline            | `mug`                                            | „Offline – Prüfung folgt, sobald das Netz da ist“ |
-| Fehler             | `exclamationmark.triangle`                       | Kurze Fehlerbeschreibung, ab Phase 6 „Log öffnen“ |
-
-Die Namen sind SF Symbols und auf dem Mac des Nutzers bestätigt, ebenso `pin`. Prüfe jedes neue Symbol vor der Verwendung.
-
-### Panel (`MenuBarExtra`, Stil `.window`)
-
-1. Kopfzeile mit Phase und „Zuletzt geprüft: vor 12 Min.“ (`RelativeDateTimeFormatter`, deutsch, jede Minute neu berechnet).
-2. Paketliste: erst Formulae, dann Casks; je Zeile Name und „installiert → neu“. Angepinnte Pakete grau mit Pin-Symbol. Ab 12 Zeilen scrollt die Liste, statt das Panel wachsen zu lassen.
-3. Knöpfe: „Alles aktualisieren“ in eigener Zeile (nur aktiv bei mindestens einem nicht angepinnten Paket; während eines Upgrades deaktiviert mit Text „Upgrade läuft im Terminal …“), „Jetzt prüfen“ (während einer Prüfung und während eines Upgrades deaktiviert), „Einstellungen …“ (ab Phase 6), „Beenden“.
-
-### Prüfplan (`Scheduler`, Phase 5)
-
-Alle automatischen Auslöser rufen denselben Einstiegspunkt `AppState.checkIfDue()`. `checkIfDue()` startet eine Prüfung mit `brew update` nur, wenn alles zutrifft:
-
-1. Es läuft keine Prüfung.
-2. Es läuft kein Upgrade. Sonst stößt `brew update` mit `brew upgrade` im Terminal zusammen; geprüft wird nach dem Recheck oder beim nächsten Auslöser.
-3. Das Netz ist da. Sonst Phase „Offline“.
-4. `isCheckDue` sagt ja. Nach einem Fehlschlag bleibt `lastSuccess` unverändert, die Prüfung ist also weiter fällig; daraus ergibt sich die Wiederholung von selbst.
-
-„Jetzt prüfen“ übergeht Bedingung 4; der Knopf ist während eines Upgrades deaktiviert, Bedingung 2 gilt also auch dort. Der Recheck nach einem Upgrade beendet zuerst den Zustand „Upgrade läuft“ und übergeht Bedingung 4.
-
-Jede Entscheidung (geprüft oder übersprungen, mit Grund) wird mit `os.Logger`, Kategorie `scheduler`, geloggt, damit sich der Prüfplan in der App „Konsole“ nachvollziehen lässt.
-
-**Prüfintervall:** gespeichert in `UserDefaults` unter `checkInterval` in Sekunden, Standard 21600 (6 Stunden). In Phase 6 schreibt das Einstellungsfenster denselben Schlüssel. Zum Testen lässt er sich vorher per Terminal setzen, z. B. auf 3 Minuten: `defaults write io.github.muunleit-projects.thetap checkInterval -float 180` (App vorher beenden). Zurück zum Standard mit `defaults delete io.github.muunleit-projects.thetap checkInterval`.
-
-**Auslöser:**
-
-- **Start:** 10 Sekunden nach dem Start, weil das Netz direkt nach dem Login oft noch fehlt.
-- **Wecker:** `NSBackgroundActivityScheduler` mit `repeats = true`, Takt = Prüfintervall durch 3, höchstens 15 Minuten. Er prüft nicht selbst, sondern ruft nur `checkIfDue()`. Das System legt den Lauf in einen günstigen Moment und darf ihn etwas verschieben. Grund für den kurzen Takt: Liefe der Wecker im Prüfintervall und käme kurz davor eine manuelle Prüfung, folgte die nächste Prüfung erst nach fast dem doppelten Intervall.
-- **Aufwachen:** `NSWorkspace.didWakeNotification` (sie kommt über `NSWorkspace.shared.notificationCenter`, nicht über das normale Notification Center), danach 60 Sekunden warten und `checkIfDue()`.
-- **Netz wieder da** (`NetworkMonitor`): `checkIfDue()`; ist nichts fällig, zurück zur vorigen Phase.
-
-**Fehlschläge:**
-
-- Jeder Fehlschlag erhöht `consecutiveFailures`; eine erfolgreiche Prüfung setzt ihn auf 0.
-- Ob ein Fehler sichtbar wird, entscheidet `Policies.showsFailure`. Bei einem stillen Fehlschlag bleiben die letzte Paketliste und die vorige Phase stehen; der nächste Wecker versucht es erneut. Typischer Grund: Der Nutzer benutzt gerade selbst brew.
-- „Jetzt prüfen“ setzt den Zähler zurück und zeigt einen Fehler sofort. Der Recheck nach einem Upgrade zählt als automatische Prüfung, weil der Nutzer ihn nicht selbst auslöst.
-- Ein Fehlschlag ohne Netz ergibt „Offline“, nicht „Fehler“.
-
-**Recheck nach dem Upgrade** (`thetap://recheck`): beendet „Upgrade läuft“ und prüft ohne `brew update`. Läuft gerade eine Prüfung, wird der Recheck vorgemerkt und direkt nach ihrem Ende ausgeführt, statt verloren zu gehen.
-
-### Mitteilungen (`Notifier`, Phase 5)
-
-- Der `AppDelegate` ist `UNUserNotificationCenterDelegate` und setzt sich in `applicationWillFinishLaunching(_:)` als Delegate. Apple verlangt, dass das vor dem Ende des Starts geschieht; in der Doku zu `UNUserNotificationCenterDelegate` nachprüfen.
-- Erlaubnis beim ersten Start mit `UNUserNotificationCenter.requestAuthorization(options: [.alert])` anfragen.
-- Nach jeder erfolgreichen Prüfung `newlyOutdated` gegen die gespeicherte Menge gemeldeter Pakete aufrufen. Ist das Ergebnis nicht leer und sind Mitteilungen erlaubt, eine Mitteilung mit Titel und Text aus `Policies.notificationText` senden.
-- Danach die Menge immer fortschreiben: neue Schlüssel ergänzen, mit `pruneNotified` aufräumen. Das gilt auch, wenn keine Mitteilung gesendet wurde (nicht erlaubt oder in den Einstellungen aus); sonst käme beim Einschalten eine Mitteilung über längst bekannte Pakete.
-- Speicherort: `UserDefaults`, Schlüssel `notifiedPackages`, als JSON-codiertes Array von `PackageKey`. Zum Testen leeren mit `defaults delete io.github.muunleit-projects.thetap notifiedPackages` (App vorher beenden).
-- Eine `UNNotificationCategory` mit der Aktion „Alles aktualisieren“ startet das Upgrade wie der Knopf im Panel; ist gerade kein Upgrade möglich, passiert nichts.
-- `userNotificationCenter(_:willPresent:)` liefert `[.banner, .list]`, damit Mitteilungen auch erscheinen, während die App aktiv ist.
-- Mitteilungen funktionieren nur in der gebündelten, signierten App, nicht über `swift run`.
-- **Beobachtet am 22.10.2026 (ad hoc signierter Debug-Build):** Beim ersten Start zeigt macOS ein Banner „Mitteilungen von „TheTap““. Ein Klick darauf öffnet die Systemeinstellungen; dort muss „Mitteilungen erlauben“ eingeschaltet werden. Danach war ein Neustart der App nötig (Ursache ungeklärt). Nach einem Neubau mit `scripts/run.sh` bleibt die Erlaubnis erhalten. Die Aktion „Alles aktualisieren“ erscheint als Knopf in der Mitteilung in der Mitteilungszentrale.
-
-### Upgrade (`UpgradeLauncher`)
-
-Fertig seit Phase 4. `UpgradeLauncher` schreibt den Text aus `UpgradeScript.content` bei jedem Upgrade neu als `thetap-upgrade.command` in `FileManager.default.temporaryDirectory`, setzt die Rechte auf `0o755`, öffnet die Datei mit `NSWorkspace.shared.open(_:)` in der Terminal-App und setzt „Upgrade läuft“. Fehler kommen als `UpgradeLaunchError` mit deutschem `userMessage`. Das Skript (`<BREW>` ist der brew-Pfad in einfachen Anführungszeichen; `--greedy` nur, wenn die Einstellung aktiv ist):
-
-```zsh
-#!/bin/zsh
-eval "$('<BREW>' shellenv)"
-'<BREW>' upgrade --greedy --no-ask
-echo
-echo "Fertig. TheTap aktualisiert die Liste jetzt."
-open -g "thetap://recheck"
-read -k 1 "?Zum Schließen eine beliebige Taste drücken …"
-```
-
-- `thetap://recheck` löst eine Prüfung **ohne** `brew update` aus (die Daten sind frisch) und beendet den Zustand „Upgrade läuft“.
-- Das Skript wartet am Ende auf einen Tastendruck, weil Terminal das Fenster sonst sofort schließt und die brew-Ausgabe nicht lesbar wäre. Der Recheck wird vorher ausgelöst.
-- Kommt kein Recheck (Fenster vorher geschlossen), endet der Zustand nach 2 Stunden von selbst; die nächste reguläre Prüfung korrigiert die Liste.
-
-### URL-Schema und App-Delegate
-
-- `CFBundleURLTypes` mit dem Schema `thetap`, eingetragen über `project.yml`.
-- Empfang über `@NSApplicationDelegateAdaptor` und `application(_:open:)` im `AppDelegate`; das klappt auch in einer reinen `MenuBarExtra`-App ohne Fenster. Unbekannte URLs ignorieren und loggen (Kategorie `upgrade`).
-- Der `AppDelegate` hält `AppState` und `NetworkMonitor`, ab Phase 5 auch den Scheduler, und ist zugleich `UNUserNotificationCenterDelegate`.
-- Zwei Kopien mit derselben Bundle-ID (Debug-Build in `build/`, installierte App in `/Applications` oder ein Download) dürfen nie gleichzeitig laufen, sonst landet `thetap://recheck` womöglich in der falschen. `scripts/run.sh` beendet jede laufende TheTap.
-
-### Einstellungen (Phase 6)
-
-SwiftUI-`Settings`-Szene (`App/Views/SettingsView.swift`), geöffnet über `SettingsLink` („Einstellungen …“) im Panel. In einer App ohne Dock-Icon erscheint das Fenster leicht hinter anderen Fenstern; `NSApp.activate()` in `onAppear` bringt es nach vorne (geprüft am 26.10.2026). Werte werden mit `@AppStorage` gespeichert; die Schlüssel stehen als `nonisolated static` in `AppState` und `Notifier`, damit Swift 6 sie im View zulässt.
-
-- Prüfintervall (Schritt 2 ✓): 1, 3, 6, 12 oder 24 Stunden, Standard 6, gespeichert unter `checkInterval` in Sekunden. Ändert sich der Wert, ruft das Fenster `AppState.checkIntervalChanged()`; der `AppDelegate` hat dort `scheduler.restartActivity()` als Rückruf (`onCheckIntervalChange`) eingetragen, der Scheduler legt den Wecker also ohne Neustart neu an. Ein Wert außerhalb der Auswahl (z. B. 180 zum Testen) gilt weiter, wird im Auswahlfeld aber nicht angezeigt.
-- Mitteilungen senden (Schritt 2 ✓): `notificationsEnabled`, Standard an. `Notifier.handle` schreibt `notifiedPackages` auch bei „aus“ fort. Erlaubt macOS keine Mitteilungen, zeigt das Fenster einen Hinweis und den Knopf „Systemeinstellungen öffnen“ (`x-apple.systempreferences:com.apple.Notifications-Settings.extension`, Rückfall auf die Systemeinstellungen allgemein); der Status wird beim Öffnen und bei jedem Aktivwerden der App neu gelesen.
-- Casks mit eigenem Updater einbeziehen (`--greedy`) (Schritt 2 ✓): `includeGreedy`, Standard an. Gilt für Prüfung (`BrewChecker.outdated(greedy:)`) und Upgrade (`UpgradeLauncher.start(greedy:)`), jeweils ab dem nächsten Aufruf; `AppState.startUpgrade()` liest die Einstellung selbst.
-- Knopf „Log im Finder zeigen“ (Schritt 2 ✓): markiert `thetap.log` im Finder, öffnet sonst den Ordner, falls er existiert.
-- Beim Anmelden starten (Schritt 4): `SMAppService.mainApp.register()` bzw. `unregister()`. Den Status bei jedem Öffnen aus `SMAppService.mainApp.status` lesen, weil der Nutzer ihn auch in den Systemeinstellungen ändern kann. Nur mit der Kopie in `/Applications` einschalten und testen: Bei zwei Kopien mit derselben Bundle-ID ist nicht verlässlich, welche beim Anmelden startet.
-
-## Fehlerbehandlung und Logging
-
-Die App stürzt nie wegen brew ab und blockiert nie die Oberfläche; jeder Fehler wird geloggt und dem Nutzer kurz und verständlich angezeigt.
-
-- **Systemlog:** `os.Logger` mit der Bundle-ID als Subsystem und den Kategorien `check`, `scheduler`, `upgrade`, `notifications`. Der Nutzer sieht es in der App „Konsole“ (nach dem Subsystem filtern).
-- **Logdatei (seit Phase 6, Schritt 1):** `App/LogFile.swift` schreibt Fehlerdetails nach `~/Library/Logs/TheTap/thetap.log`: Zeitstempel (ISO 8601, lokale Zeit) und Kopfzeile `Check failed (N in a row, manual: …, shown: …)`, darunter `BrewCheckError.logDetails` (Befehl, Exit-Code, die letzten 200 Zeilen Ausgabe). Geloggt wird jeder gezählte Fehlschlag, auch ein stiller; ein Fehlschlag ohne Netz („Offline“) nicht. Fehler beim Starten des Upgrades stehen als `Upgrade could not be started` mit der Ursache aus `UpgradeLaunchError.description` in derselben Datei. Ab 1 MB wird die Datei in `thetap.log.1` umbenannt (eine ältere `.1` wird ersetzt) und neu begonnen. Nicht `/tmp` verwenden, das leert macOS. Schreibfehler landen nur im Systemlog.
-- **„Log öffnen“:** Knopf im Panel, nur in der Phase „Fehler“; öffnet die Logdatei mit `NSWorkspace.shared.open` (auf dem Mac des Nutzers in der App „Konsole“).
-- **Meldungen in der Oberfläche:** eine Zeile auf Deutsch, die sagt, was zu tun ist (`BrewCheckError.userMessage`):
-  - `brewNotFound` → „Homebrew nicht gefunden. Erwartet unter /opt/homebrew oder /usr/local.“
-  - `timedOut` → „brew hat nicht rechtzeitig geantwortet. Neuer Versuch folgt.“
-  - `commandFailed` → „brew meldet einen Fehler. Details im Log.“
-  - `invalidJSON` → „Unerwartete Antwort von brew. Details im Log.“
-  - `cancelled` → „Die Prüfung wurde abgebrochen.“
-- **Keine sensiblen Daten** ins Log außer der brew-Ausgabe selbst; keine Umgebungsvariablen vollständig loggen. Bekannte Ausnahme, vom Nutzer so belassen (22.10.2026): Der Eintrag zu `brewNotFound` listet alle durchsuchten Ordner, also praktisch den `PATH` der App.
-
-## Teststrategie
-
-Die Bibliothek BrewCheck wird vollständig automatisch getestet, ohne dass dabei echtes brew läuft; die App wird anhand der Abnahmekriterien von Hand geprüft (keine UI-Tests). Testframework ist Swift Testing (`import Testing`), ausgeführt mit `swift test` im Package.
-
-Jede Komponente hat eine eigene Testdatei: `OutdatedParserTests` (Fixtures `real.json` als echte Ausgabe des Nutzers, `empty.json`, `formulae-only.json`, `casks-only.json`, `pinned.json`, `extra-fields.json`, `broken.json`, `blank.json` als leere Datei), `BrewLocatorTests` (injizierter `PATH`), `ProcessRunnerTests` (echte, harmlose Systembefehle: Exit-Codes, getrennte Ausgaben, mehrere MB, Timeout, Abbruch), `BrewCheckerTests` (mit `FakeRunner`: Argumente, Umgebung, Fehlerfälle), `PoliciesTests` (Tabellen inklusive angepinnter Pakete und neuer Versionen), `UpgradeScriptTests`, `ErrorMessageTests`, `LogDetailsTests` und `ModelsTests`. Neue Regeln bekommen ihre Tests in der passenden Datei. Code in `App/` (z. B. `LogFile`) liegt außerhalb des Packages und wird von Hand geprüft.
-
-Tests dürfen nie von der Umgebung der Maschine abhängen. Gegenprobe: `HOMEBREW_NO_AUTO_UPDATE=1 swift test` muss ebenfalls grün sein.
+**XcodeGen statt Xcode-Oberfläche:** Eine Mac-App braucht ein Xcode-Projekt, aber niemand muss es in Xcode öffnen. Mit [XcodeGen](https://github.com/yonaskolb/XcodeGen) beschreibt `project.yml` das Projekt als lesbaren Text; `xcodegen generate` erzeugt daraus `TheTap.xcodeproj`, und `xcodebuild` baut die App. Du änderst nur `project.yml`. Was darin steht und was die Skripte tun, beschreibt `SPEC.md` unter „Projekt und Build“.
 
 ## Phasenplan
 
-Phasen 0 bis 8 (Phase 7 ist in 7a und 7b geteilt), jede endet mit einem lauffähigen Stand und Kriterien, die der Nutzer selbst abhakt. Eine Phase beginnt erst, wenn die vorige abgehakt ist. Ausnahme ist Phase 7a: Sie berührt den App-Code nicht und darf jederzeit vorgezogen werden, auch zwischen zwei Schritten einer anderen Phase (geschehen am 27.10.2026, zwischen Phase 6 Schritt 5 und 6). Phase 7b folgt nach Phase 6.
+Jede Phase endet mit einem lauffähigen Stand und Kriterien, die der Nutzer selbst abhakt. Eine Phase beginnt erst, wenn die vorige abgehakt ist; Ausnahmen sind vermerkt. Größere Phasen sind in nummerierte Schritte geteilt. Jeder Schritt, der Code ändert, endet mit grünem `swift test`, grünem `scripts/build.sh` und einem Commit; `STATUS.md` nennt den aktuellen Schritt.
 
-Größere Phasen sind in nummerierte Schritte geteilt. Jeder Schritt endet mit grünem `swift test`, grünem `scripts/build.sh` und einem Commit; `STATUS.md` nennt den aktuellen Schritt.
+### Abgeschlossene Phasen
 
-### Phase 0 – Werkzeuge und Repo ✓
+| Phase                                   | Inhalt                                                                                         | Abgenommen | Letzter Commit |
+| --------------------------------------- | ---------------------------------------------------------------------------------------------- | ---------- | -------------- |
+| 0 – Werkzeuge und Repo                  | Xcode, Swift-Erweiterung, XcodeGen, Repo, `.gitignore`, `docs/`, `.vscode/`, CI                | ✓          | –              |
+| 1 – Kernbibliothek mit Tests            | Datenmodell, `BrewLocator`, `ProcessRunner`, `OutdatedParser`, `BrewChecker`, `Policies`       | ✓          | –              |
+| 2 – CLI                                 | `BrewCheckError.userMessage`, `brewcheck-cli`                                                   | ✓          | –              |
+| 3 – App-Gerüst                          | `project.yml`, `build.sh`, `run.sh`, `MenuBarExtra`, `AppState`, Panel                          | ✓          | –              |
+| 4 – Upgrade und Recheck                 | `UpgradeScript`, `UpgradeLauncher`, `thetap://recheck`, Zustand „Upgrade läuft“                 | ✓          | `64eaa17`      |
+| 5 – Automatik und Mitteilungen          | `NetworkMonitor`, `checkIfDue()`, Scheduler, stille Wiederholung, `Notifier` mit Aktion         | 22.10.2026 | `a8c0114`      |
+| 7a – Build und Release über GitHub      | Version aus Build-Einstellungen, `release.yml`, Testrelease (gelöscht), README zum Download      | 27.10.2026 | `83a151f`      |
 
-Xcode, Swift-Erweiterung, `brew install xcodegen`, Repo auf GitHub und auf dem Mac, `.gitignore`, `docs/`, `.vscode/`, CI.
-
-- [x] `swift --version` zeigt Swift 6 oder neuer
-- [x] `xcodegen --version` funktioniert
-- [x] Das Repo ist auf den Mac geklont, der Ordner öffnet sich in VS Code, die Swift-Erweiterung ist aktiv
-- [x] Der erste Commit mit `docs/PLAN.md` liegt auf GitHub; die GitHub-Actions-Prüfung ist angelegt und wird ab Phase 1 grün
-
-### Phase 1 – Kernbibliothek mit Tests ✓
-
-Package `Packages/BrewCheck` mit Datenmodell, `BrewLocator`, `ProcessRunner`, `OutdatedParser`, `BrewChecker` und `Policies`.
-
-- [x] `swift test` ist grün, alle Testgruppen aus der Teststrategie sind vorhanden
-- [x] Der Parser liest die echte `real.json` des Nutzers korrekt
-
-### Phase 2 – CLI ✓
-
-`BrewCheckError.userMessage` und `brewcheck-cli`.
-
-- [x] `swift run brewcheck-cli` zeigt dieselben Pakete wie `brew outdated --greedy`
-- [x] `--no-update`, `--no-greedy` und `--json` funktionieren
-- [x] Ohne Netz erscheint eine verständliche Fehlermeldung statt eines Absturzes
-
-### Phase 3 – App-Gerüst ✓
-
-`project.yml`, `scripts/build.sh`, `scripts/run.sh`, App mit `MenuBarExtra`, `AppState`, Panel mit Liste sowie „Jetzt prüfen“ und „Beenden“.
-
-- [x] `scripts/build.sh` läuft ohne Fehler, lokal und in GitHub Actions
-- [x] Die VS-Code-Tasks „App bauen“ und „App starten“ funktionieren
-- [x] Die App startet ohne Dock-Icon und zeigt ihr Icon in der Menüleiste
-- [x] „Jetzt prüfen“ zeigt die echten Pakete; das Panel bleibt während der Prüfung bedienbar
-- [x] Das Icon zeigt die richtige Zahl
-
-### Phase 4 – Upgrade und Recheck ✓
-
-`UpgradeScript`, `UpgradeLauncher`, URL-Schema `thetap://recheck`, Zustand „Upgrade läuft“.
-
-- [x] „Alles aktualisieren“ öffnet das Terminal und startet das Upgrade
-- [x] Nach dem Ende des Upgrades aktualisiert sich die Liste von selbst
-- [x] Angepinnte Pakete bleiben sichtbar, zählen aber nicht mit
-
-### Phase 5 – Automatik und Mitteilungen ✓
-
-Die App prüft selbstständig, wiederholt still nach Fehlschlägen und meldet neue Updates per Mitteilung. Spezifikation unter „Prüfplan“ und „Mitteilungen“.
-
-1. **Netzwerk und Offline-Phase** – committet in `8c568ca`: `NetworkMonitor` (`NWPathMonitor`), `AppState.networkChanged(isOnline:)`; ein Fehlschlag ohne Netz ergibt „Offline“.
-2. **Neue Regeln in `Policies`** – committet in `af55f21`: `failuresBeforeError`, `showsFailure` und `notificationText` samt Tests in `PoliciesTests`. `consecutiveFailures` zählt den aktuellen Fehlschlag mit: ein automatischer Fehler wird ab dem 3. Fehlschlag in Folge sichtbar. Nur das Package, keine App-Änderung.
-3. **Einstiegspunkt und Recheck** – committet in `56688cb`: `AppState.checkIfDue()` mit den vier Bedingungen und Logging, Prüfintervall aus `checkInterval`, vorgemerkter Recheck; `networkChanged` nutzt `checkIfDue()`.
-4. **Scheduler** – committet in `8536dbf`: `App/Scheduler.swift` mit Start nach 10 Sekunden, Wecker per `NSBackgroundActivityScheduler` und Aufwachen; der `AppDelegate` startet ihn.
-5. **Stille Wiederholung** – committet in `914f0de`: `AppState` unterscheidet manuelle und automatische Prüfungen (`checkNow(manual:)`) und nutzt `showsFailure`; stille Fehlschläge lassen Liste und Phase stehen. „Jetzt prüfen“ ist während eines Upgrades deaktiviert.
-6. **Mitteilungen senden** – committet in `56f4b6a`: `App/Notifier.swift` mit Erlaubnis, Text aus `notificationText` und Fortschreibung von `notifiedPackages`; `AppState` ruft `notifier.handle` nach jeder erfolgreichen Prüfung, der `AppDelegate` fragt die Erlaubnis beim Start an.
-7. **Aktion und Delegate** – committet in `a8c0114`: Kategorie mit der Aktion „Alles aktualisieren“ (`Notifier.registerCategories()`), `AppDelegate` als `UNUserNotificationCenterDelegate` mit `willPresent` und `didReceive`.
-
-Abnahme (für Tests mit `checkInterval` von 3 Minuten, danach zurücksetzen):
-
-- [x] WLAN aus → Phase „Offline“; WLAN wieder an → die fällige Prüfung folgt
-- [x] `open "thetap://recheck"` während einer laufenden Prüfung: Direkt danach folgt eine zweite Prüfung (Log in „Konsole“)
-- [x] Während „Upgrade läuft“ startet keine automatische Prüfung (Log: übersprungen)
-- [x] Ohne Zutun folgt nach Ablauf des Prüfintervalls eine neue Prüfung; das System darf den Wecker um einige Minuten verschieben
-- [x] Nach dem Aufwachen aus dem Ruhezustand folgt eine fällige Prüfung nach etwa einer Minute
-- [x] Die Regeln für stille Wiederholung sind in `PoliciesTests` abgedeckt und grün
-- [x] Beim ersten Start mit Mitteilungen fragt macOS nach der Erlaubnis (Banner, dann Schalter in den Systemeinstellungen)
-- [x] Nach `defaults delete … notifiedPackages` ergibt die nächste Prüfung genau eine Mitteilung, eine weitere Prüfung ohne Änderung keine
-- [x] Die Aktion „Alles aktualisieren“ in der Mitteilung startet das Upgrade
-- [x] Erlaubnis und Mitteilungen funktionieren auch nach einem Neubau mit `scripts/run.sh` (klärt den offenen Punkt „Signierung im Alltag“ für Mitteilungen)
+Phase 7a wurde vor Phase 6, Schritt 6 gezogen, weil sie den App-Code nicht berührt. Die ausführlichen Schritte und Abnahmekriterien dieser Phasen stehen in der Git-Historie dieser Datei (Fassung vor dem 27.10.2026).
 
 ### Phase 6 – Einstellungen, Login-Start, Feinschliff
 
-1. **Logdatei** ✓ – abgeschlossen am 22.10.2026 (`5ebc449`, `c70a664` und die Änderung am `UpgradeLauncher`); nach „Fehlerbehandlung und Logging“; „Log öffnen“ in der Phase „Fehler“.
-2. **Einstellungsfenster** ✓ – abgeschlossen am 26.10.2026 (`ff90382`); `Settings`-Szene, `SettingsLink` im Panel, Fenster nach vorne; Prüfintervall, Mitteilungen an/aus, `--greedy`, „Log im Finder zeigen“; Spezifikation unter „Einstellungen (Phase 6)“.
-3. **Installation** ✓ – abgeschlossen am 26.10.2026 (Push `5c5661c`): `scripts/build.sh` nimmt als ersten Parameter die Konfiguration (Standard `Debug`); `scripts/install.sh` baut Release (`ONLY_ACTIVE_ARCH=YES`, nur die Architektur dieses Macs), beendet die laufende TheTap, ersetzt `/Applications/TheTap.app` per `ditto`, prüft die Signatur und startet die App. Ab jetzt läuft im Alltag nur diese Kopie. `scripts/run.sh` beendet sie beim Entwickeln; danach startet der Nutzer sie wieder mit `open /Applications/TheTap.app`.
-4. **Beim Anmelden starten** ✓ – abgeschlossen am 26.10.2026 (Push `7de6bf9`, CI grün): `SMAppService` in den Einstellungen; geprüft mit der Kopie in `/Applications` nach Ab- und Anmelden.
-5. **App-Icon** ✓ (bis auf Mitteilungen) – abgeschlossen am 27.10.2026 (`ecfb5c1`). Das Master-Bild (1024 × 1024 Pixel, RGBA, vom Nutzer bereitgestellt) liegt als `design/AppIcon-1024.png` im Repo; `scripts/make-icons.sh` erzeugt daraus mit `sips` die zehn Größen für `App/Assets.xcassets/AppIcon.appiconset`; `project.yml` setzt `ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon`. Geprüft: Finder (Launchpad) und Anmeldeobjekte zeigen das Icon. In Mitteilungen und in den Systemeinstellungen unter „Mitteilungen“ erscheint weiter ein Platzhalter-Icon; das steht unter „Offene Punkte“.
-6. **Eine Woche Alltag** – danach die Standardwerte prüfen (offener Punkt). Beginn und Ende legt der Nutzer fest.
+Schritte 1 bis 5 sind abgeschlossen: Logdatei (`5ebc449`, `c70a664`, `62c7d35`), Einstellungsfenster (`ff90382`), Installation mit `scripts/install.sh` (`5c5661c`), „Beim Anmelden starten“ (`7de6bf9`), App-Icon (`ecfb5c1`). Die Spezifikation steht in `SPEC.md`.
+
+6. **Eine Woche Alltag** – nichts zu bauen. Der Nutzer benutzt die Kopie in `/Applications`, notiert Auffälligkeiten in `STATUS.md` und prüft danach die Standardwerte (Prüfintervall 6 Stunden, `--greedy` an). Beginn und Ende legt der Nutzer fest.
+
+Abnahme:
 
 - [x] Die Einstellungen öffnen sich im Vordergrund; alle Werte bleiben nach einem Neustart der App erhalten
 - [x] Ein geändertes Prüfintervall wirkt ohne Neustart der App
 - [x] „Beim Anmelden starten“ funktioniert nach Ab- und Anmelden
 - [x] Bei einem Fehler entsteht die Logdatei unter `~/Library/Logs/TheTap/`; „Log öffnen“ zeigt sie
-- [ ] Die App hat ein eigenes Icon im Finder und in Mitteilungen (Finder und Anmeldeobjekte ✓, Mitteilungen offen)
-- [ ] Die App liegt in `/Applications` und läuft eine Woche ohne Auffälligkeiten
+- [x] Die App hat ein eigenes Icon im Finder und in den Anmeldeobjekten (geprüft am 27.10.2026). Ein eigenes Icon in Mitteilungen braucht der Nutzer nicht (entschieden am 27.10.2026); dort zeigt macOS weiter einen Platzhalter.
+- [ ] Die App liegt in `/Applications` und läuft eine Woche ohne Auffälligkeiten; die Standardwerte sind bestätigt oder angepasst
 
-### Phase 7a – Build und Release über GitHub ✓
+### Phase 7b – Update-Test über einen eigenen Homebrew-Tap
 
-Abgenommen am 27.10.2026, vorgezogen vor Phase 6, Schritt 6. GitHub Actions baut die App bei jedem Versions-Tag `v…` als Release-Build für Apple Silicon und Intel und hängt sie als ZIP an einen GitHub-Release. Die App ist ad hoc signiert und nicht notarisiert; macOS blockiert sie deshalb beim ersten Start, bis der Nutzer sie in den Systemeinstellungen freigibt.
+Klärt, was beim Ersetzen einer installierten Version durch eine neuere passiert. Jeder Ad-hoc-Build hat eine andere Signatur; ob macOS Freigabe, Mitteilungs-Erlaubnis und Login-Start behält, zeigt nur ein echtes Update.
 
-`.github/workflows/release.yml` liegt im Repo (`8c5c96f`). Der Testrelease `v0.1.0-test.1` lief beim ersten Versuch grün und ist wieder gelöscht; der Tag wird nie wiederverwendet. Die Anleitung steht in `docs/RELEASE.md`. Solange Phase 6 nicht abgehakt ist, gibt es nur Vorabversionen mit Bindestrich (`v0.1.0-test.2`, `v1.0.0-beta.1`); danach `v1.0.0`.
+Der Test läuft gleich über den eigenen Homebrew-Tap (entschieden am 27.10.2026, siehe „Feste Entscheidungen“). Homebrew markiert Downloads genauso als „aus dem Internet geladen“ wie der Browser, die Antwort gilt also auch für den Download der ZIP. Zusätzlich zeigt sich, ob TheTap sich über „Alles aktualisieren“ selbst aktualisieren kann.
 
-Beobachtet beim Test (27.10.2026): Die heruntergeladene App meldet beim ersten Start „„TheTap“ nicht geöffnet“; die Freigabe läuft über „Datenschutz & Sicherheit“ → „Dennoch öffnen“, dann im Dialog „„TheTap“ öffnen?“ erneut „Dennoch öffnen“ und die Eingabe von Admin-Name und Passwort. Danach startet sie ohne Warnung, ebenso mit `xattr -dr com.apple.quarantine`. Beim Ersetzen der lokal gebauten Kopie blieben Mitteilungs-Erlaubnis und der Eintrag in den Anmeldeobjekten erhalten. Die Texte stehen in der README.
+1. **Tap anlegen:** Repo `muunleit-projects/homebrew-tap` mit `Casks/thetap.rb`; in `release.yml` den Schritt „Checksum“ ergänzen. Anleitung und Grundgerüst in `RELEASE.md` unter „Homebrew-Tap“.
+2. **Erste Version:** `MARKETING_VERSION` auf `1.0.0` setzen, `v1.0.0-beta.1` veröffentlichen und den Cask darauf setzen (`RELEASE.md`). TheTap über „Beenden“ schließen und `/Applications/TheTap.app` in den Papierkorb legen, sonst bricht brew ab, weil dort schon eine App liegt. Dann `brew install --cask muunleit-projects/tap/thetap`, freigeben, Mitteilungen erlauben, „Beim Anmelden starten“ einschalten und einige Tage so benutzen. Ab hier kommt die Alltagskopie nur noch über brew, nicht mehr über `scripts/install.sh`.
+3. **Zweite Version:** `v1.0.0` veröffentlichen, den Cask aktualisieren und pushen. In TheTap „Jetzt prüfen“: `thetap` steht in der Liste. „Alles aktualisieren“ klicken. Erwartet: brew beendet TheTap, installiert die neue Version, und `thetap://recheck` am Ende des Skripts startet sie.
+4. **Beobachten und festhalten** (README unter „Aktualisieren“, dauerhafte Erkenntnisse in `SPEC.md`): Verlangt macOS die Freigabe in „Datenschutz & Sicherheit“ erneut? Bleiben Mitteilungs-Erlaubnis und „Beim Anmelden starten“ erhalten? Fragt macOS, ob Terminal TheTap steuern darf (das Beenden vor dem Upgrade läuft über ein Apple-Event)? Meldet TheTap nach der Installation über den Tap Fehler bei der Prüfung (Stichwort Tap-Vertrauen, siehe Phase 8)?
 
 Abnahme:
 
-- [x] Ein Tag `v…` startet den Lauf „Release“, und er wird grün
-- [x] „Check build“ zeigt die Version aus dem Tag (ohne den Zusatz nach dem Bindestrich), beide Architekturen und `Signature=adhoc`
-- [x] Am Release hängt `TheTap-<Version>.zip`; Tags mit Bindestrich erscheinen als „Pre-release“
-- [x] Die heruntergeladene App startet nach der Freigabe in den Systemeinstellungen und funktioniert wie der lokale Build
-- [x] Die README beschreibt Download, Installation und Freigabe mit den echten Texten aus macOS (`83a151f`)
+- [ ] Die Installation über den Tap klappt; TheTap prüft danach ohne Fehler
+- [ ] Die neuere Version erscheint in der Paketliste und lässt sich über „Alles aktualisieren“ installieren; danach läuft genau eine TheTap, und `brew list --cask --versions thetap` zeigt die neue Version
+- [ ] Die README sagt, ob Freigabe, Mitteilungs-Erlaubnis und „Beim Anmelden starten“ nach einem Update erhalten bleiben oder neu eingeschaltet werden müssen
 
-### Phase 7b – Erster Release nach Phase 6
+### Phase 8 – Homebrew-Tap veröffentlichen
 
-Klärt, was beim Ersetzen einer heruntergeladenen Version durch eine neuere passiert. Jeder Ad-hoc-Build hat eine andere Signatur; ob macOS Freigabe, Mitteilungs-Erlaubnis und Login-Start behält, lässt sich nur so prüfen.
+Geklärt am 27.10.2026 anhand der Homebrew-Dokumentation: Ins offizielle Repository `homebrew/cask` kommt TheTap nicht. Apps in offiziellen Casks müssen die Gatekeeper-Prüfung auf einem Mac mit Standardeinstellungen bestehen, was Developer-ID-Signatur und Notarisierung voraussetzt; Casks ohne beides hat Homebrew mit Version 5.0.0 abgekündigt und bis September 2026 entfernt. Außerdem braucht ein vom Autor selbst eingereichtes Paket mindestens 225 Sterne, 90 Forks oder 90 Beobachter. Der Weg ist ein eigener Tap: ein öffentliches Repo `muunleit-projects/homebrew-tap` mit `Casks/thetap.rb`. Ablauf und Grundgerüst stehen in `RELEASE.md` unter „Homebrew-Tap“.
 
-1. Nach Abschluss von Phase 6 `MARKETING_VERSION` auf `1.0.0` setzen und `v1.0.0-beta.1` veröffentlichen (Ablauf in `docs/RELEASE.md`).
-2. Die lokale Kopie in `/Applications` durch den Download ersetzen, freigeben, Mitteilungen erlauben und „Beim Anmelden starten“ einschalten. Einige Tage so benutzen.
-3. `v1.0.0` veröffentlichen, herunterladen und die Version in „Programme“ ersetzen.
-4. Prüfen und in der README unter „Update“ festhalten: Ist die Freigabe in „Datenschutz & Sicherheit“ erneut nötig? Bleiben Mitteilungs-Erlaubnis und „Beim Anmelden starten“ erhalten?
+Was für Nutzer des Taps gilt:
 
-- [ ] Die neuere Version ersetzt die ältere; die README sagt, ob Freigabe, Mitteilungs-Erlaubnis und „Beim Anmelden starten“ erhalten bleiben oder neu eingeschaltet werden müssen
+- **Tap-Vertrauen (seit Homebrew 6.0.0):** Pakete aus fremden Taps lädt brew nur nach ausdrücklichem Vertrauen. Wer mit vollem Namen installiert (`brew install --cask muunleit-projects/tap/thetap`), vertraut damit genau diesem Cask; einen eigenen `brew trust`-Schritt braucht es dann nicht.
+- **Keine Abkürzung an Gatekeeper vorbei:** `--no-quarantine` gibt es nicht mehr. Die Freigabe in „Datenschutz & Sicherheit“ ist also auch bei Homebrew nötig, genau wie beim Download.
 
-### Phase 8 – Veröffentlichung über Homebrew Cask
+Schritte (nach Phase 7b):
 
-Die App soll über Homebrew Cask verfügbar sein. Die Veröffentlichung erfolgt erst nach Phase 7b, wenn die App stabil läuft und die Nutzererfahrung getestet wurde.
+1. README: Abschnitt „Mit Homebrew installieren“ mit Befehl, Freigabe (Verweis auf den vorhandenen Abschnitt), Update über „Alles aktualisieren“ oder `brew upgrade --cask thetap` und Deinstallation mit `brew uninstall --cask thetap` (mit `--zap` samt Einstellungen und Log).
+2. Optional: den Cask bei jedem Release automatisch aktualisieren. Das braucht einen Token mit Schreibrecht auf das Tap-Repo als Secret im TheTap-Repo; bis dahin von Hand nach `RELEASE.md`.
 
-Vor dem Start klären (nicht geprüft): Ob das offizielle Homebrew-Cask-Repository eine ad hoc signierte, nicht notarisierte App aufnimmt, steht in der Homebrew-Dokumentation nach. Ein eigener Tap wäre eine Alternative.
+Abnahme:
+
+- [ ] `brew audit --cask --strict muunleit-projects/tap/thetap` meldet keine Fehler
+- [ ] Die README beschreibt Installation, Freigabe, Update und Deinstallation über Homebrew
+- [ ] Ein Release lässt sich mit den Schritten aus `RELEASE.md` bis in den Tap bringen
 
 ## Offene Punkte
 
-Diese Punkte sind noch nicht geklärt. Kläre sie in der genannten Phase und trage die Antwort unter „Feste Entscheidungen“ ein.
+Diese Punkte sind noch nicht entschieden oder geklärt. Trage die Antwort unter „Feste Entscheidungen“ (oder in `SPEC.md` unter „Erprobtes Verhalten“) ein und lösche den Punkt.
 
-- [x] **Signierung im Alltag:** Mitteilungen funktionieren mit Ad-hoc-Signierung zuverlässig, auch nach einem Neubau (geprüft in Phase 5 am 22.10.2026). Der Login-Start funktioniert ebenfalls: Die Kopie in `/Applications` startete nach Ab- und Anmelden von selbst (Phase 6, Schritt 4, geprüft am 26.10.2026). Ein kostenloses „Personal Team“ ist deshalb nicht nötig; bei Ad-hoc-Signierung bleibt es.
-- [ ] **Icon in Mitteilungen:** Finder (Launchpad) und Anmeldeobjekte zeigen das neue App-Icon (geprüft am 27.10.2026). In Mitteilungen und in den Systemeinstellungen unter „Mitteilungen“ erscheint weiter das alte Platzhalter-Icon, auch nach Neustart von `NotificationCenter` und der Systemeinstellungen, nach dem Austragen der überzähligen Pfade bei Launch Services (Papierkorb, `build/…/Debug`, `build/…/Release`) und auch mit der vom GitHub-Runner gebauten, heruntergeladenen Kopie. Das App-Bundle selbst ist in Ordnung (`AppIcon.icns`, `Assets.car`, `CFBundleIconFile`, `CFBundleIconName`). Da dieselbe Bundle-ID auf demselben Mac läuft, ist der Download-Test nicht eindeutig; die Ursache ist ungeklärt. Nutzer bearbeitet das später (Ideen: Neustart des Macs, zweiter Benutzer oder anderer Mac, Verhalten des Icon-Caches).
-- [ ] **Updates mit Ad-hoc-Signierung:** Bleiben Freigabe, Mitteilungs-Erlaubnis und Login-Start nach dem Ersetzen durch eine neue Version erhalten? Teilweise beobachtet am 27.10.2026: Beim Ersetzen der lokalen Kopie durch den Download blieben Mitteilungs-Erlaubnis und Anmeldeobjekt erhalten. Offen ist, ob eine neuere heruntergeladene Version die Freigabe erneut verlangt. Prüfen in Phase 7b.
-- [ ] **Standardwerte:** Prüfintervall 6 Stunden und `--greedy` an sind Vorschläge; der Nutzer kann sie nach einer Woche Alltag (Phase 6) anpassen.
+- [ ] **Quarantäne im Cask:** Ein `postflight`-Block im Cask könnte nach der Installation `xattr -dr com.apple.quarantine` ausführen. Dann entfiele die Freigabe, aber auch die Prüfung durch Gatekeeper, ohne dass der Nutzer davon etwas merkt. Vorschlag: zuerst ohne, Entscheidung nach Phase 7b. Ob Homebrew das in fremden Taps weiter zulässt, ist nicht geprüft.
+- [ ] **Updates mit Ad-hoc-Signierung:** Bleiben Freigabe, Mitteilungs-Erlaubnis und Login-Start nach einem Update erhalten? Beim Ersetzen der lokalen Kopie durch den Download (27.10.2026) blieben Mitteilungs-Erlaubnis und Anmeldeobjekt erhalten; offen ist, ob eine neuere Version die Freigabe erneut verlangt. Klärt Phase 7b.
+- [ ] **Standardwerte:** Prüfintervall 6 Stunden und `--greedy` an sind Vorschläge; der Nutzer entscheidet nach der Woche Alltag (Phase 6, Schritt 6).
 
 ## Quellen
 
 - [muunleit-projects/show_updates](https://github.com/muunleit-projects/show_updates) – Vorbild, insbesondere [checkupdates.go](https://raw.githubusercontent.com/muunleit-projects/show_updates/main/pkg/checkupdates/checkupdates.go)
-- [Homebrew-Manpage](https://docs.brew.sh/Manpage) – Optionen von `outdated` und `upgrade` (`--json=v2`, `--greedy`, `--no-ask`) und Umgebungsvariablen
+- [Homebrew-Manpage](https://docs.brew.sh/Manpage) – Optionen von `outdated` und `upgrade` (`--json=v2`, `--greedy`, `--no-ask`), `brew trust`, Umgebungsvariablen
 - [XcodeGen](https://github.com/yonaskolb/XcodeGen), Standardwerte der Info.plist in [InfoPlistGenerator.swift](https://github.com/yonaskolb/XcodeGen/blob/master/Sources/XcodeGenKit/InfoPlistGenerator.swift)
 - [gh release create](https://cli.github.com/manual/gh_release_create) – Optionen `--verify-tag`, `--prerelease`, `--generate-notes`
 - [Apple: Safely open apps on your Mac](https://support.apple.com/en-us/102445) – Freigabe nicht notarisierter Apps über „Datenschutz & Sicherheit“
+- Homebrew: [Acceptable Casks](https://docs.brew.sh/Acceptable-Casks) (Gatekeeper-Pflicht), [Package Acceptance Policy](https://docs.brew.sh/Package-Acceptance-Policy) (Sterne, Forks, Beobachter), [Tap Trust](https://docs.brew.sh/Tap-Trust), [How to Create and Maintain a Tap](https://docs.brew.sh/How-to-Create-and-Maintain-a-Tap), [Cask Cookbook](https://docs.brew.sh/Cask-Cookbook), [Security and Supply Chain](https://docs.brew.sh/Homebrew-Security-and-Supply-Chain) (Quarantäne)
+- [Workbrew: What Homebrew 5.0.0 means](https://workbrew.com/blog/what-homebrew-5-0-0-means-for-your-mac-fleet) – Ende von `--no-quarantine`, Entfernen nicht notarisierter Casks bis September 2026
