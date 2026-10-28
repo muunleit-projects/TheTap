@@ -21,4 +21,4 @@ DerivedData/
 *.dSYM.zip
 
 # Visual Studio Code
-.vscode/
+.vscode/settings.json

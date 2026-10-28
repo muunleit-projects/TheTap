@@ -1,0 +1,24 @@
+{
+  "configurations": [
+    {
+      "type": "swift",
+      "request": "launch",
+      "args": [],
+      "cwd": "${workspaceFolder:TheTap}/Packages/BrewCheck",
+      "name": "Debug brewcheck-cli (Packages/BrewCheck)",
+      "target": "brewcheck-cli",
+      "configuration": "debug",
+      "preLaunchTask": "swift: Build Debug brewcheck-cli (Packages/BrewCheck)"
+    },
+    {
+      "type": "swift",
+      "request": "launch",
+      "args": [],
+      "cwd": "${workspaceFolder:TheTap}/Packages/BrewCheck",
+      "name": "Release brewcheck-cli (Packages/BrewCheck)",
+      "target": "brewcheck-cli",
+      "configuration": "release",
+      "preLaunchTask": "swift: Build Release brewcheck-cli (Packages/BrewCheck)"
+    }
+  ]
+}
