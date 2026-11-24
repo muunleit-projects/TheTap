@@ -56,6 +56,9 @@ jobs:
       - name: Zip app
         run: ditto -c -k --sequesterRsrc --keepParent "$APP" "TheTap-$VERSION.zip"
 
+      - name: Checksum
+        run: shasum -a 256 "TheTap-$VERSION.zip" | tee -a "$GITHUB_STEP_SUMMARY"
+
       - name: Publish GitHub Release
         env:
           GH_TOKEN: ${{ github.token }}
