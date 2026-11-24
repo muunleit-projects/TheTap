@@ -161,16 +161,27 @@ Jede Entscheidung (geprüft oder übersprungen, mit Grund) wird mit `os.Logger`,
 ```zsh
 #!/bin/zsh
 eval "$('<BREW>' shellenv)"
+rechecked=0
+recheck() {
+  if (( ! rechecked )); then
+    rechecked=1
+    open -g "thetap://recheck"
+  fi
+}
+trap recheck EXIT
+trap 'recheck; exit 130' INT
 '<BREW>' upgrade --greedy --no-ask
 echo
 echo "Fertig. TheTap aktualisiert die Liste jetzt."
-open -g "thetap://recheck"
+recheck
 read -k 1 "?Zum Schließen eine beliebige Taste drücken …"
 ```
 
 - `thetap://recheck` löst eine Prüfung **ohne** `brew update` aus (die Daten sind frisch) und beendet den Zustand „Upgrade läuft“.
-- Das Skript wartet am Ende auf einen Tastendruck, weil Terminal das Fenster sonst sofort schließt und die brew-Ausgabe nicht lesbar wäre. Der Recheck wird vorher ausgelöst.
-- Kommt kein Recheck (Fenster vorher geschlossen), endet der Zustand nach 2 Stunden von selbst; die nächste reguläre Prüfung korrigiert die Liste.
+- Der Recheck wird höchstens einmal pro Skriptlauf gesendet (Flag `rechecked`). Er kommt am normalen Ende vor dem Warten auf die Taste, damit sich die Liste aktualisiert, während der Nutzer die brew-Ausgabe liest.
+- Bricht der Nutzer ab, sendet ein Trap den Recheck: Der `INT`-Trap bei Strg+C (danach `exit 130`; der `EXIT`-Trap greift nur noch über das Flag), der `EXIT`-Trap beim Schließen des Terminal-Fensters. Beide werden vor `brew upgrade` gesetzt.
+- Das Skript wartet am Ende auf einen Tastendruck, weil Terminal das Fenster sonst sofort schließt und die brew-Ausgabe nicht lesbar wäre.
+- Kommt trotzdem kein Recheck (nicht erprobt: etwa wenn der Prozess hart beendet wird), endet der Zustand nach 2 Stunden von selbst; die nächste reguläre Prüfung korrigiert die Liste.
 
 ### URL-Schema und App-Delegate
 
@@ -217,6 +228,8 @@ Jede Komponente hat eine eigene Testdatei: `OutdatedParserTests` (Fixtures `real
 ## Erprobtes Verhalten
 
 Auf dem Mac des Nutzers oder in der CI beobachtet. Neue dauerhafte Erkenntnisse kommen hierher, nicht nach `STATUS.md`.
+
+- zsh-Trap bei Abbruch (24.11.2026): Beim Schließen des Terminal-Fensters läuft ein `trap … EXIT`, bei Strg+C nicht; dort braucht es zusätzlich `trap '…; exit 130' INT` (danach läuft der EXIT-Trap noch einmal, daher das Flag `rechecked`). Mit beiden Traps endete „Upgrade läuft“ in der Handprobe in beiden Fällen sofort mit dem Recheck.
 
 **brew**
 

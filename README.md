@@ -45,9 +45,9 @@ Ein Klick auf das Icon öffnet das Panel:
 
 ### Upgrade
 
-„Alles aktualisieren“ legt ein kleines Skript im temporären Ordner an und öffnet es in der Terminal-App. Das Skript führt `brew upgrade --greedy --no-ask` aus (`--greedy` nur, wenn „Casks mit eigenem Updater einbeziehen“ eingeschaltet ist). Am Ende meldet es sich über `thetap://recheck` bei TheTap, die Liste wird neu geladen, und das Fenster wartet auf einen Tastendruck, damit du die Ausgabe von brew in Ruhe lesen kannst.
+„Alles aktualisieren“ legt ein kleines Skript im temporären Ordner an und öffnet es in der Terminal-App. Das Skript führt `brew upgrade --greedy --no-ask` aus (`--greedy` nur, wenn „Casks mit eigenem Updater einbeziehen“ eingeschaltet ist). Am Ende meldet es sich über `thetap://recheck` bei TheTap, die Liste wird neu geladen, und das Fenster wartet auf einen Tastendruck, damit du die Ausgabe von brew in Ruhe lesen kannst. Brichst du das Upgrade mit Strg+C ab oder schließt du das Terminal-Fenster, meldet sich das Skript ebenfalls bei TheTap, und die Liste wird neu geladen.
 
-Solange das Upgrade läuft, startet TheTap keine eigene Prüfung, damit sich `brew update` und `brew upgrade` nicht in die Quere kommen. Schließt du das Terminal-Fenster vor dem Ende, endet der Zustand „Upgrade läuft“ nach zwei Stunden von selbst.
+Solange das Upgrade läuft, startet TheTap keine eigene Prüfung, damit sich `brew update` und `brew upgrade` nicht in die Quere kommen. Kommt aus irgendeinem Grund keine Meldung vom Skript, endet der Zustand „Upgrade läuft“ nach zwei Stunden von selbst.
 
 ## Voraussetzungen
 
