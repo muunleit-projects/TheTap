@@ -4,25 +4,27 @@ Stand: 24.11.2026
 
 ## Aktuelle Phase
 
-Phase 7b, Schritt 1 – Update-Test über einen eigenen Homebrew-Tap. Phase 6 ist abgenommen (24.11.2026, Standardwerte bestätigt), Phase 7a ebenfalls. Danach folgt Phase 8.
+Phase 7b, Schritt 2 – Update-Test über einen eigenen Homebrew-Tap. Schritt 1 ist erledigt. Phase 6 und Phase 7a sind abgenommen. Danach folgt Phase 8.
 
 ## Umgebung
 
-- Repo: https://github.com/muunleit-projects/TheTap (Branch `main`), lokal unter `~/Programmieren/swift/TheTap`. Letzter Commit vor dieser Aktualisierung: `a351d82` („Update status after recheck traps“); die CI ist grün.
+- Repo: https://github.com/muunleit-projects/TheTap (Branch `main`), lokal unter `~/Programmieren/swift/TheTap`. Letzter Commit vor dieser Aktualisierung: `f9d9705` („Print checksum of release zip“); die CI ist grün (nach einem Re-Run, der erste Lauf hing in der Runner-Warteschlange).
+- Tap-Repo: https://github.com/muunleit-projects/homebrew-tap (öffentlich), lokal unter `~/Programmieren/homebrew-tap`. Bisher nur `README.md` (Commit `4dede7e`, „Initial commit“); `Casks/thetap.rb` fehlt noch.
 - Mac: macOS 26, Xcode 27.1, Swift 6.4, xcodegen 2.46.0, Homebrew 7.0.9, git 2.54.0. brew liegt unter `/opt/homebrew/bin/brew` (normale Datei, kein Symlink). VS Code mit der Swift-Erweiterung (swiftlang).
 - CI: Runner `macos-26` mit Xcode 26.6 und Swift 6.3.3 (älter als der Mac).
-- Release: `release.yml` liegt im Repo und lief einmal grün; der Schritt „Checksum“ fehlt dort noch. Es gibt keinen Release; `v0.1.0-test.1` ist verbraucht.
+- Release: `release.yml` liegt im Repo und lief einmal grün; der Schritt „Checksum“ ist ergänzt, aber noch nie gelaufen. Es gibt keinen Release; `v0.1.0-test.1` ist verbraucht.
 - Tests: 81 Tests in 7 Suites, lokal (auch mit `HOMEBREW_NO_AUTO_UPDATE=1`) und in der CI grün.
 - Im Alltag läuft `/Applications/TheTap.app`, am 24.11.2026 mit `scripts/install.sh` installiert (nur `arm64`); „Beim Anmelden starten“ ist an. Phase 7b ersetzt diese Kopie durch die Installation über brew.
 - Claude kann Dateien aus dem GitHub-Repo nicht selbst lesen. Der Nutzer lädt sie hoch oder das ganze Repo als ZIP.
 
 ## Zuletzt erledigt
 
-- 24.11.2026, Phase 6 abgenommen: Woche Alltag (28.10. bis 08.11.2026) ohne Auffälligkeiten, Standardwerte bestätigt (Prüfintervall 6 Stunden, `--greedy` an), `PLAN.md` entsprechend angepasst.
-- 24.11.2026, Abbruch des Upgrades behandelt (`68763bb`, Doku `b7bc7ce`): Das Upgrade-Skript sendet den Recheck einmal pro Lauf, auch bei Strg+C und beim Schließen des Fensters (siehe `SPEC.md`, „Upgrade (`UpgradeLauncher`)“).
+- 24.11.2026, Phase 7b, Schritt 1: `brew info --cask thetap` meldet, dass es kein Cask dieses Namens gibt (Name frei); Schritt „Checksum“ in `release.yml` ergänzt (`f9d9705`); Tap-Repo angelegt und geklont.
+- 24.11.2026, Phase 6 abgenommen (Standardwerte bestätigt, `1297ba4`).
 
 ## Offene Probleme
 
+- Der Schritt „Checksum“ in `release.yml` ist ungetestet; der erste Lauf folgt mit `v1.0.0-beta.1`.
 - Warnungen im Release-Build wurden nie ausgewertet. Bei Bedarf: `scripts/build.sh Release ONLY_ACTIVE_ARCH=YES 2>&1 | grep -i warning`.
 - Scroll-Grenze der Paketliste (ab 12 Zeilen) nicht bewusst geprüft; am 26. und 27.10. waren 17 bzw. 19 Pakete veraltet. Beim nächsten Öffnen des Panels mit vielen Paketen darauf achten.
 - VS Code: Findet die Swift-Erweiterung `Packages/BrewCheck` von selbst (keine roten Fehler in den Quelldateien, Tests in der Seitenleiste)?
@@ -36,7 +38,7 @@ Phase 7b, Schritt 1 – Update-Test über einen eigenen Homebrew-Tap. Phase 6 is
 
 ## Nächster Schritt
 
-1. **Phase 7b, Schritt 1:** Prüfen, dass der Name im offiziellen Repo frei ist (`brew info --cask thetap`), den Schritt „Checksum“ in `.github/workflows/release.yml` ergänzen, das Repo `muunleit-projects/homebrew-tap` anlegen und klonen. Anleitung in `RELEASE.md`, „Homebrew-Tap“. Das Ersetzen der Alltagskopie in `/Applications` folgt erst in Schritt 2.
-2. **Phase 7b, Schritt 2:** `v1.0.0-beta.1` veröffentlichen, Cask anlegen und installieren (siehe `PLAN.md`).
+1. **Phase 7b, Schritt 2a:** `MARKETING_VERSION` in `project.yml` auf `1.0.0` setzen, `scripts/build.sh`, Commit `Bump version to 1.0.0`, pushen, CI abwarten, dann `v1.0.0-beta.1` taggen und pushen (`RELEASE.md`, „Ablauf“). Aus dem Lauf die SHA-256 aus „Checksum“ notieren.
+2. **Phase 7b, Schritt 2b:** `Casks/thetap.rb` im Tap anlegen, `brew audit`, TheTap beenden, `/Applications/TheTap.app` in den Papierkorb, installieren (siehe `PLAN.md`).
 
-Im neuen Chat hochladen: `PLAN.md`, `STATUS.md`, `RELEASE.md` und `.github/workflows/release.yml`.
+Im neuen Chat hochladen: `PLAN.md`, `STATUS.md`, `RELEASE.md` und `project.yml`.
