@@ -10,13 +10,13 @@ Vorbild ist [muunleit-projects/show_updates](https://github.com/muunleit-project
 
 Dieses Dokument ist die Arbeitsanweisung für die KI, die die App baut. Lies es zu Beginn jeder Sitzung ganz. Die Entscheidungen im Abschnitt „Feste Entscheidungen“ gelten; willst du davon abweichen, frag zuerst den Nutzer. Widerspricht eine hochgeladene Datei dem Plan, gilt die Datei; sprich den Widerspruch an und passe den Plan an.
 
-| Datei            | Inhalt                                                      | Hochladen                                          |
-| ---------------- | ----------------------------------------------------------- | -------------------------------------------------- |
-| `docs/PLAN.md`   | Arbeitsregeln, feste Entscheidungen, Phasen, offene Punkte  | in jedem Chat                                      |
-| `docs/STATUS.md` | aktueller Stand, offene Probleme, nächster Schritt          | in jedem Chat                                      |
-| `docs/SPEC.md`   | technische Spezifikation und erprobtes Verhalten            | wenn Code, ein Skript oder `project.yml` sich ändert |
-| `docs/RELEASE.md`| Ablauf eines Releases, Homebrew-Tap                         | wenn ein Release oder der Tap dran ist             |
-| `README.md`      | Anleitung für Nutzer der App                                | wenn sich sichtbares Verhalten ändert              |
+| Datei             | Inhalt                                                     | Hochladen                                            |
+| ----------------- | ---------------------------------------------------------- | ---------------------------------------------------- |
+| `docs/PLAN.md`    | Arbeitsregeln, feste Entscheidungen, Phasen, offene Punkte | in jedem Chat                                        |
+| `docs/STATUS.md`  | aktueller Stand, offene Probleme, nächster Schritt         | in jedem Chat                                        |
+| `docs/SPEC.md`    | technische Spezifikation und erprobtes Verhalten           | wenn Code, ein Skript oder `project.yml` sich ändert |
+| `docs/RELEASE.md` | Ablauf eines Releases, Homebrew-Tap                        | wenn ein Release oder der Tap dran ist               |
+| `README.md`       | Anleitung für Nutzer der App                               | wenn sich sichtbares Verhalten ändert                |
 
 ## Arbeitsregeln für die KI
 
@@ -50,6 +50,7 @@ Diese Punkte sind mit dem Nutzer abgestimmt und werden nicht ohne Rücksprache g
 - **Sprache und UI:** Swift 6 im Sprachmodus 6, SwiftUI; AppKit nur, wo SwiftUI nicht reicht. _Grund:_ Menüleiste, Mitteilungen und Login-Start sind eingebaute macOS-Funktionen.
 - **Form:** Menüleisten-App ohne Dock-Icon: `MenuBarExtra` mit Stil `.window`, `LSUIElement = YES`. _Grund:_ Ein Panel mit scrollbarer Paketliste und Knöpfen statt eines schlichten Menüs.
 - **Prüfung:** `brew update`, danach `brew outdated --json=v2 --greedy`. _Grund:_ Wie das Vorbild; `--greedy` erfasst auch Casks mit eigenem Updater.
+- **Standardwerte:** Prüfintervall alle 6 Stunden, „Casks mit eigenem Updater einbeziehen“ (`--greedy`) an (bestätigt am 24.11.2026). _Grund:_ Eine Woche Alltag (28.10. bis 08.11.2026) ohne Auffälligkeiten; beide Werte lassen sich in den Einstellungen ändern.
 - **Upgrade:** Alles auf einmal im Terminal: `brew upgrade --greedy --no-ask` über ein temporäres `.command`-Skript; es öffnet sich auf dem Mac des Nutzers in der Terminal-App. _Grund:_ Manche Casks fragen nach dem sudo-Passwort und brauchen ein echtes Terminal; kein AppleScript-Berechtigungsdialog.
 - **Mitteilungen:** `UserNotifications`, nur wenn neue veraltete Pakete dazukommen. _Grund:_ Nicht bei jeder Prüfung erneut stören.
 - **Autostart:** `SMAppService.mainApp`, Schalter in den Einstellungen. _Grund:_ Offizieller Weg seit macOS 13.
@@ -126,32 +127,18 @@ Jede Phase endet mit einem lauffähigen Stand und Kriterien, die der Nutzer selb
 
 ### Abgeschlossene Phasen
 
-| Phase                                   | Inhalt                                                                                         | Abgenommen | Letzter Commit |
-| --------------------------------------- | ---------------------------------------------------------------------------------------------- | ---------- | -------------- |
-| 0 – Werkzeuge und Repo                  | Xcode, Swift-Erweiterung, XcodeGen, Repo, `.gitignore`, `docs/`, `.vscode/`, CI                | ✓          | –              |
-| 1 – Kernbibliothek mit Tests            | Datenmodell, `BrewLocator`, `ProcessRunner`, `OutdatedParser`, `BrewChecker`, `Policies`       | ✓          | –              |
-| 2 – CLI                                 | `BrewCheckError.userMessage`, `brewcheck-cli`                                                   | ✓          | –              |
-| 3 – App-Gerüst                          | `project.yml`, `build.sh`, `run.sh`, `MenuBarExtra`, `AppState`, Panel                          | ✓          | –              |
-| 4 – Upgrade und Recheck                 | `UpgradeScript`, `UpgradeLauncher`, `thetap://recheck`, Zustand „Upgrade läuft“                 | ✓          | `64eaa17`      |
-| 5 – Automatik und Mitteilungen          | `NetworkMonitor`, `checkIfDue()`, Scheduler, stille Wiederholung, `Notifier` mit Aktion         | 22.10.2026 | `a8c0114`      |
-| 7a – Build und Release über GitHub      | Version aus Build-Einstellungen, `release.yml`, Testrelease (gelöscht), README zum Download      | 27.10.2026 | `83a151f`      |
+| Phase                                       | Inhalt                                                                                                                                | Abgenommen | Letzter Commit |
+| ------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------- | ---------- | -------------- |
+| 0 – Werkzeuge und Repo                      | Xcode, Swift-Erweiterung, XcodeGen, Repo, `.gitignore`, `docs/`, `.vscode/`, CI                                                       | ✓          | –              |
+| 1 – Kernbibliothek mit Tests                | Datenmodell, `BrewLocator`, `ProcessRunner`, `OutdatedParser`, `BrewChecker`, `Policies`                                              | ✓          | –              |
+| 2 – CLI                                     | `BrewCheckError.userMessage`, `brewcheck-cli`                                                                                         | ✓          | –              |
+| 3 – App-Gerüst                              | `project.yml`, `build.sh`, `run.sh`, `MenuBarExtra`, `AppState`, Panel                                                                | ✓          | –              |
+| 4 – Upgrade und Recheck                     | `UpgradeScript`, `UpgradeLauncher`, `thetap://recheck`, Zustand „Upgrade läuft“                                                       | ✓          | `64eaa17`      |
+| 5 – Automatik und Mitteilungen              | `NetworkMonitor`, `checkIfDue()`, Scheduler, stille Wiederholung, `Notifier` mit Aktion                                               | 22.10.2026 | `a8c0114`      |
+| 6 – Einstellungen, Login-Start, Feinschliff | Logdatei, Einstellungsfenster, `scripts/install.sh`, „Beim Anmelden starten“, App-Icon, Recheck-Traps im Upgrade-Skript, Woche Alltag | 24.11.2026 | `68763bb`      |
+| 7a – Build und Release über GitHub          | Version aus Build-Einstellungen, `release.yml`, Testrelease (gelöscht), README zum Download                                           | 27.10.2026 | `83a151f`      |
 
-Phase 7a wurde vor Phase 6, Schritt 6 gezogen, weil sie den App-Code nicht berührt. Die ausführlichen Schritte und Abnahmekriterien dieser Phasen stehen in der Git-Historie dieser Datei (Fassung vor dem 27.10.2026).
-
-### Phase 6 – Einstellungen, Login-Start, Feinschliff
-
-Schritte 1 bis 5 sind abgeschlossen: Logdatei (`5ebc449`, `c70a664`, `62c7d35`), Einstellungsfenster (`ff90382`), Installation mit `scripts/install.sh` (`5c5661c`), „Beim Anmelden starten“ (`7de6bf9`), App-Icon (`ecfb5c1`). Die Spezifikation steht in `SPEC.md`.
-
-6. **Eine Woche Alltag** – nichts zu bauen. Der Nutzer benutzt die Kopie in `/Applications`, notiert Auffälligkeiten in `STATUS.md` und prüft danach die Standardwerte (Prüfintervall 6 Stunden, `--greedy` an). Beginn und Ende legt der Nutzer fest.
-
-Abnahme:
-
-- [x] Die Einstellungen öffnen sich im Vordergrund; alle Werte bleiben nach einem Neustart der App erhalten
-- [x] Ein geändertes Prüfintervall wirkt ohne Neustart der App
-- [x] „Beim Anmelden starten“ funktioniert nach Ab- und Anmelden
-- [x] Bei einem Fehler entsteht die Logdatei unter `~/Library/Logs/TheTap/`; „Log öffnen“ zeigt sie
-- [x] Die App hat ein eigenes Icon im Finder und in den Anmeldeobjekten (geprüft am 27.10.2026). Ein eigenes Icon in Mitteilungen braucht der Nutzer nicht (entschieden am 27.10.2026); dort zeigt macOS weiter einen Platzhalter.
-- [ ] Die App liegt in `/Applications` und läuft eine Woche ohne Auffälligkeiten; die Standardwerte sind bestätigt oder angepasst
+Phase 7a wurde vor Phase 6, Schritt 6 gezogen, weil sie den App-Code nicht berührt. Die ausführlichen Schritte und Abnahmekriterien der abgeschlossenen Phasen stehen in der Git-Historie dieser Datei (Fassungen vor dem 27.10.2026 und vor dem 24.11.2026).
 
 ### Phase 7b – Update-Test über einen eigenen Homebrew-Tap
 
@@ -196,7 +183,6 @@ Diese Punkte sind noch nicht entschieden oder geklärt. Trage die Antwort unter 
 
 - [ ] **Quarantäne im Cask:** Ein `postflight`-Block im Cask könnte nach der Installation `xattr -dr com.apple.quarantine` ausführen. Dann entfiele die Freigabe, aber auch die Prüfung durch Gatekeeper, ohne dass der Nutzer davon etwas merkt. Vorschlag: zuerst ohne, Entscheidung nach Phase 7b. Ob Homebrew das in fremden Taps weiter zulässt, ist nicht geprüft.
 - [ ] **Updates mit Ad-hoc-Signierung:** Bleiben Freigabe, Mitteilungs-Erlaubnis und Login-Start nach einem Update erhalten? Beim Ersetzen der lokalen Kopie durch den Download (27.10.2026) blieben Mitteilungs-Erlaubnis und Anmeldeobjekt erhalten; offen ist, ob eine neuere Version die Freigabe erneut verlangt. Klärt Phase 7b.
-- [ ] **Standardwerte:** Prüfintervall 6 Stunden und `--greedy` an sind Vorschläge; der Nutzer entscheidet nach der Woche Alltag (Phase 6, Schritt 6).
 
 ## Quellen
 
